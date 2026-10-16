@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Resume Maker
+
+An **ATS-friendly resume builder** — local-first, no account required. Built from the specification in [`.md/`](./.md/README.md).
+
+- Structured form editing with live preview and autosave to `localStorage`
+- 10 ATS-safe templates with font/color/spacing customization
+- Deterministic local ATS scoring with job-description keyword analysis
+- Optional server-side AI assistance (rewrite, summarize, suggest, deep review)
+- PDF export via the browser print engine (selectable text, best for ATS)
+- PDF/DOCX/JSON import, parsed entirely client-side
+- Document-level undo/redo, versioned JSON backup
+
+## Stack
+
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · Zustand · react-hook-form + zod · next-intl · react-to-print · pdfjs-dist · mammoth · @vercel/analytics
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.example` to `.env.local` (never commit real keys):
 
-## Learn More
+| Var | Required | Purpose |
+|---|---|---|
+| `AI_ENABLED` | No | Set to `true` to enable AI routes. Fail closed when unset. |
+| `OPENAI_API_KEY` | For AI only | OpenAI-compatible API key (server-only) |
+| `OPENAI_BASE_URL` | No | Base URL override for compatible providers. Must be `https:` (or `http:` on localhost), without credentials, and not a private/loopback IP. |
+| `OPENAI_MODEL` | No | Model identifier (default `gpt-4o-mini`) |
+| `KV_REST_API_URL` | No | Vercel KV REST URL for a global AI rate limit |
+| `KV_REST_API_TOKEN` | No | Vercel KV REST token (paired with the URL) |
 
-To learn more about Next.js, take a look at the following resources:
+AI routes fail closed: `403 ai_disabled` when not enabled, `503 ai_not_configured` when the key is missing, `429 rate_limited` with `Retry-After` under load.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Security & Privacy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- The API key lives only in serverless functions; it is never bundled to the client.
+- Resume data never leaves the browser except when the user explicitly runs an AI action (with disclosed consent).
+- Import/export/parsing all run client-side — no uploads.
+- Security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) are set in `next.config.ts`.
+- `.env*` is git-ignored; only `.env.example` is committed.
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run build
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Import the repo at [vercel.com/new](https://vercel.com/new), then configure the environment variables above (Project → Settings → Environment Variables). AI stays disabled until `AI_ENABLED=true` and a key are set.
+
+## Commands
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Dev server |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint |

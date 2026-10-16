@@ -1,26 +1,184 @@
-@import "tailwindcss";
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafb;
+  --color-border: #e5eaec;
+  --color-text: #2c3a3e;
+  --color-text-muted: #6f7f87;
+  --color-primary: #478f94;
+  --color-accent: #478f94;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: "Georgia", serif;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #f1f4f5;
+  --foreground: #2c3a3e;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ---- Resume preview page sizing ---- */
+#resume-preview {
+  --page-w: 8.5in;
+  width: var(--page-w);
+  min-height: 11in;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Preview scale-down inside the pane is handled by transform on a wrapper */
+.preview-scaler {
+  transform-origin: top center;
+}
+
+/* Editor panes */
+.editor-form-pane {
+  display: flex;
+}
+.editor-preview-pane {
+  display: block;
+}
+
+/* Mobile single-pane behavior: below md (48em), hide the inactive pane */
+@media (max-width: 47.99em) {
+  .editor-pane-hidden-mobile {
+    display: none !important;
+  }
+}
+
+/* Desktop: form pane is always a flex column */
+@media (min-width: 48em) {
+  .editor-form-pane {
+    display: flex !important;
+  }
+  .editor-preview-pane {
+    display: block !important;
+  }
+}
+
+/* ---- Landing page ---- */
+.landing-root {
+  min-height: 100dvh;
+  background: linear-gradient(180deg, #f8fafb 0%, #eef3f4 100%);
+}
+
+.hero-copy,
+.hero-preview,
+.feature-card {
+  opacity: 0;
+}
+
+.hero-copy.hero-in {
+  animation: landing-fade-up 0.7s ease forwards;
+}
+
+.hero-preview.hero-in {
+  animation: landing-fade-up 0.7s ease 0.15s forwards;
+}
+
+.feature-card.hero-in {
+  animation: landing-fade-up 0.6s ease forwards;
+}
+
+@keyframes landing-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-float {
+  position: relative;
+  animation: landing-float 6s ease-in-out infinite;
+}
+
+@keyframes landing-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.hero-resume-frame {
+  width: 100%;
+  max-width: 430px;
+  height: 560px;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow:
+    0 2px 6px rgba(35, 81, 84, 0.08),
+    0 24px 48px rgba(35, 81, 84, 0.16);
+}
+
+.hero-chip {
+  position: absolute;
+  filter: drop-shadow(0 6px 12px rgba(35, 81, 84, 0.2));
+}
+
+.hero-chip-a {
+  top: 18px;
+  right: -14px;
+  animation: landing-float 5s ease-in-out 0.6s infinite;
+}
+
+.hero-chip-b {
+  bottom: 32px;
+  left: -18px;
+  animation: landing-float 5s ease-in-out 1.2s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-copy,
+  .hero-preview,
+  .feature-card {
+    opacity: 1;
+  }
+  .hero-float,
+  .hero-chip-a,
+  .hero-chip-b {
+    animation: none;
+  }
+}
+
+/* ---- Print stylesheet (08-pdf-export.md) ---- */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #resume-preview,
+  #resume-preview * {
+    visibility: visible;
+  }
+  #resume-preview {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    width: 100%;
+    min-height: auto;
+    box-shadow: none;
+  }
+  .preview-scaler {
+    transform: none !important;
+  }
+  #resume-preview h2 {
+    break-after: avoid;
+  }
+  #resume-preview .resume-entry {
+    break-inside: avoid;
+  }
 }

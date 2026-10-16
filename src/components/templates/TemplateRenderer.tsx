@@ -1,0 +1,311 @@
+"use client";
+
+import type { CSSProperties, ReactNode, Ref } from "react";
+import {
+  buildStyleContext,
+  isSectionVisible,
+  visibleSections,
+  type TemplateStyleVariant,
+} from "@/lib/templates/style-context";
+import { PAGE_SIZES } from "@/lib/templates/style-context";
+import type { ResumeDocument, ResumeSettings, SectionId } from "@/lib/schema";
+
+interface TemplateRendererProps {
+  document: ResumeDocument;
+  settings: ResumeSettings;
+  innerRef?: Ref<HTMLDivElement>;
+  variant?: TemplateStyleVariant;
+  layout?: "single" | "two-column" | "timeline";
+  children?: ReactNode;
+}
+
+function contactLine(doc: ResumeDocument): string {
+  const c = doc.contact;
+  return [c.location, c.phone, c.email, c.website, c.linkedin, c.github]
+    .filter((v): v is string => typeof v === "string" && v.trim() !== "")
+    .join(" | ");
+}
+
+function bullets(items: string[], listStyle: CSSProperties) {
+  if (!items.filter((b) => b.trim()).length) return null;
+  return (
+    <ul style={listStyle}>
+      {items
+        .filter((b) => b.trim())
+        .map((b, i) => (
+          <li key={i}>{b}</li>
+        ))}
+    </ul>
+  );
+}
+
+/**
+ * Shared ATS-safe renderer: linear semantic HTML, no tables,
+ * single reading order, real text everywhere (05-resume-templates.md).
+ */
+export function TemplateRenderer({
+  document: doc,
+  settings,
+  innerRef,
+  variant = "default",
+  layout = "single",
+  children,
+}: TemplateRendererProps) {
+  const s = buildStyleContext(settings, variant);
+  const sections = visibleSections(doc) as SectionId[];
+  const order = doc.sectionOrder;
+
+  const renderSummary = () =>
+    isSectionVisible(doc, "summary") ? <p style={{ margin: 0 }}>{doc.summary}</p> : null;
+
+  const renderExperience = () =>
+    order.includes("experience") && isSectionVisible(doc, "experience") ? (
+      <div style={{ display: "flex", flexDirection: "column", gap: s.entryGap }}>
+        {doc.experience.map((e) => (
+          <div
+            key={e.id}
+            className="resume-entry"
+            style={
+              layout === "timeline"
+                ? {
+                    position: "relative",
+                    paddingLeft: "14pt",
+                    borderLeft: `1.5pt solid ${settings.accentColor}`,
+                  }
+                : undefined
+            }
+          >
+            {layout === "timeline" ? (
+              <span
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  left: "-4.5pt",
+                  top: "3pt",
+                  width: "7.5pt",
+                  height: "7.5pt",
+                  borderRadius: "50%",
+                  background: settings.accentColor,
+                  display: "inline-block",
+                }}
+              />
+            ) : null}
+            <h3 style={s.entryTitleStyle}>
+              {e.role}
+              {e.company ? ` — ${e.company}` : ""}
+            </h3>
+            <p style={s.entryMetaStyle}>
+              {[e.location, e.startDate, e.isCurrent ? "Present" : e.endDate]
+                .filter((v): v is string => typeof v === "string" && v.trim() !== "")
+                .join(" | ")}
+            </p>
+            {bullets(e.bullets, s.listStyle)}
+          </div>
+        ))}
+      </div>
+    ) : null;
+
+  const renderEducation = () =>
+    order.includes("education") && isSectionVisible(doc, "education") ? (
+      <div style={{ display: "flex", flexDirection: "column", gap: s.entryGap }}>
+        {doc.education.map((e) => (
+          <div key={e.id} className="resume-entry">
+            <h3 style={s.entryTitleStyle}>
+              {e.school}
+              {e.degree ? ` — ${e.degree}` : ""}
+              {e.field ? `, ${e.field}` : ""}
+            </h3>
+            <p style={s.entryMetaStyle}>
+              {[e.startDate, e.endDate].filter(Boolean).join(" | ")}
+            </p>
+            {bullets(e.bullets, s.listStyle)}
+          </div>
+        ))}
+      </div>
+    ) : null;
+
+  const renderProjects = () =>
+    order.includes("projects") && isSectionVisible(doc, "projects") ? (
+      <div style={{ display: "Flex", flexDirection: "column", gap: s.entryGap }}>
+        {doc.projects.map((p) => (
+          <div key={p.id} className="resume-entry">
+            <h3 style={s.entryTitleStyle}>
+              {p.name}
+              {p.link ? (
+                <>
+                  {" — "}
+                  <a
+                    href={p.link}
+                    style={{ color: settings.accentColor, textDecoration: "none" }}
+                  >
+                    {p.link}
+                  </a>
+                </>
+              ) : null}
+            </h3>
+            {p.description ? <p style={{ margin: 0 }}>{p.description}</p> : null}
+            {bullets(p.bullets, s.listStyle)}
+          </div>
+        ))}
+      </div>
+    ) : null;
+
+  const renderSkills = () =>
+    order.includes("skills") && isSectionVisible(doc, "skills") ? (
+      <div style={{ display: "flex", flexDirection: "column", gap: "2pt" }}>
+        {doc.skills
+          .filter((g) => g.items.length)
+          .map((g) => (
+            <p key={g.id} style={{ margin: 0 }}>
+              <strong style={{ color: settings.primaryColor }}>{g.category}:</strong>{" "}
+              {g.items.join(", ")}
+            </p>
+          ))}
+      </div>
+    ) : null;
+
+  const renderCertifications = () =>
+    order.includes("certifications") && isSectionVisible(doc, "certifications") ? (
+      <div style={{ display: "flex", flexDirection: "column", gap: "2pt" }}>
+        {doc.certifications.map((c) => (
+          <p key={c.id} style={{ margin: 0 }} className="resume-entry">
+            <strong>{c.name}</strong>
+            {c.issuer ? ` — ${c.issuer}` : ""}
+            {c.date ? ` (${c.date})` : ""}
+          </p>
+        ))}
+      </div>
+    ) : null;
+
+  const renderLanguages = () =>
+    order.includes("languages") && isSectionVisible(doc, "languages") ? (
+      <p style={{ margin: 0 }}>{doc.languages.join(", ")}</p>
+    ) : null;
+
+  const renderReferences = () =>
+    order.includes("references") && isSectionVisible(doc, "references") ? (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          columnGap: "18pt",
+          rowGap: s.entryGap,
+        }}
+      >
+        {doc.references.map((r) => (
+          <div key={r.id} className="resume-entry">
+            <h3 style={s.entryTitleStyle}>{r.name}</h3>
+            {r.role || r.company ? (
+              <p style={s.entryMetaStyle}>
+                {[r.role, r.company]
+                  .filter((v): v is string => typeof v === "string" && v.trim() !== "")
+                  .join(" — ")}
+              </p>
+            ) : null}
+            {r.email ? (
+              <p style={{ ...s.entryMetaStyle, color: settings.accentColor }}>
+                {r.email}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    ) : null;
+
+  const renderInterests = () =>
+    order.includes("interests") && isSectionVisible(doc, "interests") ? (
+      <p style={{ margin: 0 }}>{doc.interests.join(", ")}</p>
+    ) : null;
+
+  const sectionRenderers: Record<SectionId, () => ReactNode> = {
+    summary: renderSummary,
+    experience: renderExperience,
+    education: renderEducation,
+    projects: renderProjects,
+    skills: renderSkills,
+    certifications: renderCertifications,
+    references: renderReferences,
+    languages: renderLanguages,
+    interests: renderInterests,
+  };
+
+  const body = (
+    <>
+      {sections.map((section) => (
+        <section key={section} style={{ marginBottom: s.blockGap }}>
+          {section !== "summary" ? (
+            <h2 style={s.sectionTitleStyle}>
+              {section.charAt(0).toUpperCase() + section.slice(1)}
+            </h2>
+          ) : null}
+          {sectionRenderers[section]?.() ?? null}
+        </section>
+      ))}
+      {children}
+    </>
+  );
+
+  const page = PAGE_SIZES[settings.pageSize];
+  const contactInfo = contactLine(doc);
+
+  return (
+    <div
+      id="resume-preview"
+      ref={innerRef}
+      data-page-size={settings.pageSize}
+      style={{
+        ...s.pageStyle,
+        width: page.width,
+        minHeight: page.height,
+      }}
+    >
+      <header style={s.headerStyle}>
+        <h1 style={s.nameStyle}>{doc.contact.name || "Your Name"}</h1>
+        {doc.contact.headline ? (
+          <p style={{ ...s.entryMetaStyle, margin: "2pt 0" }}>{doc.contact.headline}</p>
+        ) : null}
+        {contactInfo ? <p style={s.contactStyle}>{contactInfo}</p> : null}
+      </header>
+      {layout === "two-column" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "30% 1fr", columnGap: "18pt" }}>
+          <div>
+            {(["skills", "certifications", "languages", "interests", "education"] as SectionId[]).map((section) => {
+              const render = sectionRenderers[section];
+              if (!render || !order.includes(section) || !isSectionVisible(doc, section)) {
+                return null;
+              }
+              return (
+                <div key={section} style={{ marginBottom: s.blockGap }}>
+                  <h2 style={s.sectionTitleStyle}>
+                    {section.charAt(0).toUpperCase() + section.slice(1)}
+                  </h2>
+                  {render()}
+                </div>
+              );
+            })}
+          </div>
+          <div>
+            {(["summary", "experience", "projects", "references"] as SectionId[]).map((section) => {
+              const render = sectionRenderers[section];
+              if (!render || !order.includes(section) || !isSectionVisible(doc, section)) {
+                return null;
+              }
+              return (
+                <div key={section} style={{ marginBottom: s.blockGap }}>
+                  {section !== "summary" ? (
+                    <h2 style={s.sectionTitleStyle}>
+                      {section.charAt(0).toUpperCase() + section.slice(1)}
+                    </h2>
+                  ) : null}
+                  {render()}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        body
+      )}
+    </div>
+  );
+}

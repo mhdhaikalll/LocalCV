@@ -1,0 +1,28 @@
+{
+  "common": {
+    "appName": "LocalCV",
+    "undo": "Undo",
+    "redo": "Redo",
+    "export": "Export",
+    "save": "Save"
+  },
+  "sections": {
+    "summary": "Summary",
+    "experience": "Experience",
+    "education": "Education",
+    "projects": "Projects",
+    "skills": "Skills",
+    "certifications": "Certifications",
+    "references": "References",
+    "languages": "Languages",
+    "interests": "Interests"
+  },
+  "ats": {
+    "score": "ATS Score",
+    "analyze": "Analyze"
+  },
+  "ai": {
+    "rewrite": "Rewrite",
+    "summarize": "Summarize"
+  }
+}
