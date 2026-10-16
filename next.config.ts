@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
   async headers() {
     const isDev = process.env.NODE_ENV === "development";
 
-    // Production CSP: default-locked; allows self, Vercel Analytics,
+    // Production CSP: default-locked; allows self, Cloudflare Web Analytics,
     // the pdf.js worker (blob:), and inline styles (Tailwind + style props).
     // script-src 'self' covers the app bundle; no inline scripts are used.
     const csp = isDev
@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
           "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
           "style-src 'self' 'unsafe-inline'",
           "worker-src 'self' blob:",
-          "connect-src 'self' https://*.vercel-insights.com ws: http:",
+          "connect-src 'self' https://cloudflareinsights.com https://*.cloudflareinsights.com ws: http:",
           "img-src 'self' data: blob:",
           "font-src 'self' data:",
           "frame-ancestors 'none'",
@@ -38,10 +38,10 @@ const nextConfig: NextConfig = {
         ]
       : [
           "default-src 'self'",
-          "script-src 'self' https://*.vercel-insights.com",
+          "script-src 'self' https://static.cloudflareinsights.com",
           "style-src 'self' 'unsafe-inline'",
           "worker-src 'self' blob:",
-          "connect-src 'self' https://*.vercel-insights.com",
+          "connect-src 'self' https://cloudflareinsights.com https://*.cloudflareinsights.com",
           "img-src 'self' data: blob:",
           "font-src 'self' data:",
           "frame-ancestors 'none'",

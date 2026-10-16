@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
-import { Analytics } from "@vercel/analytics/next";
 import { ColorSchemeScript, MantineProvider, createTheme, mantineHtmlProps } from "@mantine/core";
 import "./globals.css";
 import "@mantine/core/styles.css";
@@ -69,7 +68,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             {children}
           </NextIntlClientProvider>
         </MantineProvider>
-        <Analytics />
       </body>
     </html>
   );
