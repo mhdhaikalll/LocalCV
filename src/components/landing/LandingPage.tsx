@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   ActionIcon,
@@ -139,12 +139,6 @@ export function LandingPage() {
     primaryColor: "#2b6469",
     accentColor: "#478f94",
   }));
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
 
   return (
     <Box className="landing-root">
@@ -179,7 +173,7 @@ export function LandingPage() {
       {/* Hero */}
       <Container size="lg" pt={60} pb={80}>
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing={60} style={{ alignItems: "center" }}>
-          <Stack gap="lg" className={mounted ? "hero-copy hero-in" : "hero-copy"}>
+          <Stack gap="lg" className="hero-copy">
             <Badge variant="light" color="brand" size="lg" w="fit-content">
               Free · No account · ATS-friendly
             </Badge>
@@ -228,7 +222,7 @@ export function LandingPage() {
           </Stack>
 
           {/* Floating resume preview */}
-          <Box className={mounted ? "hero-preview hero-in" : "hero-preview"}>
+          <Box className="hero-preview">
             <Box className="hero-float">
               <Box className="hero-resume-frame">
                 <Box style={{ transform: "scale(0.52)", transformOrigin: "top left", width: 816 }}>
@@ -268,7 +262,7 @@ export function LandingPage() {
                 <Stack
                   key={f.title}
                   gap="xs"
-                  className={mounted ? "feature-card hero-in" : "feature-card"}
+                  className="feature-card"
                   style={{ animationDelay: `${0.1 + i * 0.08}s` }}
                 >
                   <ThemeIcon size={40} radius="md" variant="light" color="brand">
