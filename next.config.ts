@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
         ]
       : [
           "default-src 'self'",
-          "script-src 'self' https://static.cloudflareinsights.com",
+          "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
           "style-src 'self' 'unsafe-inline'",
           "worker-src 'self' blob:",
           "connect-src 'self' https://cloudflareinsights.com https://*.cloudflareinsights.com",
