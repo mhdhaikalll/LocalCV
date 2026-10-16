@@ -12,7 +12,7 @@ An **ATS-friendly resume builder** — local-first, no account required. Built f
 
 ## Stack
 
-Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · Zustand · react-hook-form + zod · next-intl · react-to-print · pdfjs-dist · mammoth · @vercel/analytics
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · Zustand · react-hook-form + zod · next-intl · react-to-print · pdfjs-dist · mammoth · Cloudflare Web Analytics
 
 ## Getting Started
 
@@ -43,7 +43,7 @@ AI routes fail closed: `403 ai_disabled` when not enabled, `503 ai_not_configure
 - The API key lives only in serverless functions; it is never bundled to the client.
 - Resume data never leaves the browser except when the user explicitly runs an AI action (with disclosed consent).
 - Import/export/parsing all run client-side — no uploads.
-- Security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) are set in `next.config.ts`.
+- Security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy`) are set in `next.config.ts`.
 - `.env*` is git-ignored; only `.env.example` is committed.
 
 ## Deploy on Vercel
@@ -61,3 +61,7 @@ Import the repo at [vercel.com/new](https://vercel.com/new), then configure the 
 | `npm run dev` | Dev server |
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
+
+## Contributing
+
+Contributors are welcome! Feel free to open issues, submit pull requests, or suggest improvements. Please follow existing code conventions and run `npm run lint` before submitting changes.
