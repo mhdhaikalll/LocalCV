@@ -151,7 +151,6 @@ function PreviewScaler({ children }: { children: React.ReactNode }) {
 
 export function Editor() {
   const t = useTranslations();
-  const hydrated = useResumeStore((s) => s.hydrated);
   const document = useResumeStore((s) => s.document);
   const settings = useResumeStore((s) => s.settings);
   const undo = useResumeStore((s) => s.undo);
@@ -178,10 +177,6 @@ export function Editor() {
   }, []);
 
   const isEmpty = !document.contact.name.trim() && !document.summary.trim();
-
-  if (!hydrated) {
-    return null;
-  }
 
   return (
     <AppShell
