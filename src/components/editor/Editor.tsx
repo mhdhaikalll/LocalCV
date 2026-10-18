@@ -11,15 +11,18 @@ import {
   Button,
   Drawer,
   Group,
+  Menu,
   ScrollArea,
   SegmentedControl,
   Text,
   Title,
   Tooltip,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconArrowBackUp,
   IconArrowForwardUp,
+  IconDotsVertical,
   IconDownload,
   IconFileTypePdf,
   IconFileUpload,
@@ -111,17 +114,23 @@ function ScoreBadge({ onClick }: { onClick: () => void }) {
 
 function PreviewScaler({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [contentHeight, setContentHeight] = useState(1056);
 
   useEffect(() => {
     const container = ref.current;
-    if (!container) return;
-    const observer = new ResizeObserver(() => {
-      const width = container.clientWidth;
-      // Resume page is 8.5in ≈ 816px at 96dpi.
+    const content = contentRef.current;
+    if (!container || !content) return;
+    const update = () => {
+      const width = container.clientWidth - 16; // account for padding
       setScale(Math.min(1, width / 816));
-    });
+      setContentHeight(content.offsetHeight);
+    };
+    const observer = new ResizeObserver(update);
     observer.observe(container);
+    observer.observe(content);
+    update();
     return () => observer.disconnect();
   }, []);
 
@@ -129,21 +138,35 @@ function PreviewScaler({ children }: { children: React.ReactNode }) {
     <Box
       ref={ref}
       h="100%"
+      w="100%"
       style={{
         overflow: "auto",
         background: "var(--mantine-color-gray-2)",
-        padding: "var(--mantine-spacing-md)",
+        padding: 8,
       }}
     >
       <div
-        className="preview-scaler"
         style={{
           margin: "0 auto",
-          transform: `scale(${scale})`,
-          width: `${816 * scale}px`,
+          width: Math.ceil(816 * scale),
+          height: Math.ceil(contentHeight * scale),
+          position: "relative",
         }}
       >
-        {children}
+        <div
+          ref={contentRef}
+          className="preview-scaler"
+          style={{
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+            width: 816,
+            position: "absolute",
+            top: 0,
+            left: 0,
+          }}
+        >
+          {children}
+        </div>
       </div>
     </Box>
   );
@@ -162,6 +185,7 @@ export function Editor() {
   const [panel, setPanel] = useState<Panel>("none");
   const [mobileTab, setMobileTab] = useState<MobileTab>("form");
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const isMobile = useMediaQuery("(max-width: 48em)");
 
   useUndoRedoShortcuts();
 
@@ -178,6 +202,13 @@ export function Editor() {
 
   const isEmpty = !document.contact.name.trim() && !document.summary.trim();
 
+  const triggerPrint = () => {
+    if (isEmpty && !window.confirm("The resume looks empty. Export anyway?")) {
+      return;
+    }
+    handlePrint();
+  };
+
   return (
     <AppShell
       header={{ height: 48 }}
@@ -187,9 +218,11 @@ export function Editor() {
       }}
     >
       <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between" wrap="nowrap">
-          <Group gap="xs" wrap="nowrap">
-            <Title order={4}>{t("common.appName")}</Title>
+        <Group h="100%" px="sm" justify="space-between" wrap="nowrap" gap="xs">
+          <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
+            <Title order={4} textWrap="nowrap">
+              {t("common.appName")}
+            </Title>
             <Tooltip label="Undo (Ctrl/Cmd+Z)" withArrow>
               <ActionIcon
                 variant="subtle"
@@ -214,55 +247,96 @@ export function Editor() {
             </Tooltip>
           </Group>
 
-          <Group gap="xs" wrap="nowrap">
-            <ScoreBadge onClick={() => openPanel("ats")} />
-            <Button
-              variant="default"
-              size="compact-sm"
-              leftSection={<IconFileUpload size={14} />}
-              onClick={() => openPanel("import")}
-            >
-              Import
-            </Button>
-            <Button
-              variant="default"
-              size="compact-sm"
-              leftSection={<IconRobot size={14} />}
-              onClick={() => openPanel("ai")}
-            >
-              AI
-            </Button>
-            <Button
-              variant="default"
-              size="compact-sm"
-              leftSection={<IconLayoutGrid size={14} />}
-              onClick={() => openPanel("template")}
-            >
-              Template
-            </Button>
-            <Button
-              size="compact-sm"
-              leftSection={<IconFileTypePdf size={14} />}
-              onClick={() => {
-                if (isEmpty && !window.confirm("The resume looks empty. Export anyway?")) {
-                  return;
-                }
-                handlePrint();
-              }}
-            >
-              PDF
-            </Button>
-            <Tooltip label="Download JSON backup" withArrow>
-              <ActionIcon
+          {isMobile ? (
+            <Group gap={4} wrap="nowrap">
+              <ScoreBadge onClick={() => openPanel("ats")} />
+              <Menu position="bottom-end" withinPortal>
+                <Menu.Target>
+                  <ActionIcon variant="default" size="lg" aria-label="More actions">
+                    <IconDotsVertical size={18} />
+                  </ActionIcon>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item
+                    leftSection={<IconFileTypePdf size={16} />}
+                    onClick={triggerPrint}
+                  >
+                    Export PDF
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<IconDownload size={16} />}
+                    onClick={() => exportJson(document, settings)}
+                  >
+                    Export JSON
+                  </Menu.Item>
+                  <Menu.Divider />
+                  <Menu.Item
+                    leftSection={<IconLayoutGrid size={16} />}
+                    onClick={() => openPanel("template")}
+                  >
+                    Template
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<IconRobot size={16} />}
+                    onClick={() => openPanel("ai")}
+                  >
+                    AI assistant
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<IconFileUpload size={16} />}
+                    onClick={() => openPanel("import")}
+                  >
+                    Import
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            </Group>
+          ) : (
+            <Group gap="xs" wrap="nowrap">
+              <ScoreBadge onClick={() => openPanel("ats")} />
+              <Button
                 variant="default"
-                size="lg"
-                onClick={() => exportJson(document, settings)}
-                aria-label="Export JSON"
+                size="compact-sm"
+                leftSection={<IconFileUpload size={14} />}
+                onClick={() => openPanel("import")}
               >
-                <IconDownload size={16} />
-              </ActionIcon>
-            </Tooltip>
-          </Group>
+                Import
+              </Button>
+              <Button
+                variant="default"
+                size="compact-sm"
+                leftSection={<IconRobot size={14} />}
+                onClick={() => openPanel("ai")}
+              >
+                AI
+              </Button>
+              <Button
+                variant="default"
+                size="compact-sm"
+                leftSection={<IconLayoutGrid size={14} />}
+                onClick={() => openPanel("template")}
+              >
+                Template
+              </Button>
+              <Button
+                size="compact-sm"
+                leftSection={<IconFileTypePdf size={14} />}
+                onClick={triggerPrint}
+              >
+                PDF
+              </Button>
+              <Tooltip label="Download JSON backup" withArrow>
+                <ActionIcon
+                  variant="default"
+                  size="lg"
+                  onClick={() => exportJson(document, settings)}
+                  aria-label="Export JSON"
+                >
+                  <IconDownload size={16} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
+          )}
         </Group>
       </AppShell.Header>
 
@@ -391,7 +465,7 @@ export function Editor() {
           onClose={() => setPanel("none")}
           title="Template & customization"
           position="right"
-          size="md"
+          size={isMobile ? "100%" : "md"}
           padding="md"
         >
           <TemplatePanel />
@@ -401,7 +475,7 @@ export function Editor() {
           onClose={() => setPanel("none")}
           title="ATS Score"
           position="right"
-          size="md"
+          size={isMobile ? "100%" : "md"}
           padding="md"
         >
           <AtsPanel />
@@ -411,7 +485,7 @@ export function Editor() {
           onClose={() => setPanel("none")}
           title="AI assistant"
           position="right"
-          size="md"
+          size={isMobile ? "100%" : "md"}
           padding="md"
         >
           <AiPanel />
@@ -421,7 +495,7 @@ export function Editor() {
           onClose={() => setPanel("none")}
           title="Import resume"
           position="right"
-          size="md"
+          size={isMobile ? "100%" : "md"}
           padding="md"
         >
           <ImportPanel />
