@@ -110,7 +110,9 @@ export function TemplateRenderer({
   const order = doc.sectionOrder;
 
   const renderSummary = () =>
-    isSectionVisible(doc, "summary") ? <p style={{ margin: 0 }}>{doc.summary}</p> : null;
+    isSectionVisible(doc, "summary") ? (
+      <p style={{ margin: 0, textAlign: "justify" }}>{doc.summary}</p>
+    ) : null;
 
   const renderExperience = () =>
     order.includes("experience") && isSectionVisible(doc, "experience") ? (
@@ -371,8 +373,13 @@ export function TemplateRenderer({
     >
       {header}
       {useTwoColumn ? (
-        <div style={{ display: "grid", gridTemplateColumns: "30% 1fr", columnGap: "18pt" }}>
-          <div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "30% 1fr",
+          }}
+        >
+          <div style={{ paddingRight: "18pt" }}>
             {(["skills", "certifications", "languages", "interests", "education"] as SectionId[]).map((section) => {
               const render = sectionRenderers[section];
               if (!render || !order.includes(section) || !isSectionVisible(doc, section)) {
@@ -388,7 +395,12 @@ export function TemplateRenderer({
               );
             })}
           </div>
-          <div>
+          <div
+            style={{
+              borderLeft: `1pt solid ${settings.accentColor}`,
+              paddingLeft: "18pt",
+            }}
+          >
             {(["summary", "experience", "projects", "references"] as SectionId[]).map((section) => {
               const render = sectionRenderers[section];
               if (!render || !order.includes(section) || !isSectionVisible(doc, section)) {
