@@ -9,10 +9,16 @@ export interface ResumeTemplateProps {
   document: ResumeDocument;
   settings: ResumeSettings;
   innerRef?: Ref<HTMLDivElement>;
+  decorative?: boolean;
 }
 
 function makeTemplate(variant: TemplateStyleVariant, layout?: "two-column" | "timeline") {
-  return function ResumeTemplate({ document, settings, innerRef }: ResumeTemplateProps) {
+  return function ResumeTemplate({
+    document,
+    settings,
+    innerRef,
+    decorative,
+  }: ResumeTemplateProps) {
     return (
       <TemplateRenderer
         document={document}
@@ -20,6 +26,7 @@ function makeTemplate(variant: TemplateStyleVariant, layout?: "two-column" | "ti
         innerRef={innerRef}
         variant={variant}
         layout={layout}
+        decorative={decorative}
       />
     );
   };
@@ -60,7 +67,15 @@ export function ResumePreview({
   document,
   settings,
   innerRef,
+  decorative,
 }: ResumeTemplateProps) {
   const Template = TEMPLATE_COMPONENTS[settings.templateId] ?? ClassicTemplate;
-  return <Template document={document} settings={settings} innerRef={innerRef} />;
+  return (
+    <Template
+      document={document}
+      settings={settings}
+      innerRef={innerRef}
+      decorative={decorative}
+    />
+  );
 }

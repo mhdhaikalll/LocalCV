@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
+  Accordion,
   ActionIcon,
   Badge,
   Box,
@@ -29,6 +30,7 @@ import {
 import { ResumePreview } from "@/components/templates";
 import { createEmptyDocument, createDefaultSettings } from "@/lib/schema";
 import type { ResumeDocument } from "@/lib/schema";
+import { FAQS } from "@/lib/seo/site";
 
 function buildSampleDocument(): ResumeDocument {
   const doc = createEmptyDocument();
@@ -181,7 +183,7 @@ export function LandingPage() {
               Build a resume that actually gets read.
             </Title>
             <Text size="lg" c="dimmed" maw={480}>
-              A local-first resume builder with deterministic ATS scoring, ten
+              A local-first resume builder with deterministic ATS scoring, twelve
               parser-safe templates, and print-perfect PDF export. Your data stays
               in your browser — always.
             </Text>
@@ -226,7 +228,7 @@ export function LandingPage() {
             <Box className="hero-float">
               <Box className="hero-resume-frame">
                 <Box style={{ transform: "scale(0.52)", transformOrigin: "top left", width: 816 }}>
-                  <ResumePreview document={sample} settings={settings} />
+                  <ResumePreview document={sample} settings={settings} decorative />
                 </Box>
               </Box>
               <Box className="hero-chip hero-chip-a">
@@ -279,6 +281,82 @@ export function LandingPage() {
         </Container>
       </Box>
 
+      {/* Answer-first summary — written for featured snippets and AI answer engines */}
+      <Box py={72} bg="gray.0" style={{ borderTop: "1px solid var(--mantine-color-gray-2)" }}>
+        <Container size="md">
+          <Stack gap="md">
+            <Title order={2} c="brand.9">
+              What is LocalCV?
+            </Title>
+            <Text>
+              LocalCV is a free, local-first resume builder that runs entirely in your
+              browser. It produces ATS-friendly resumes with a deterministic score based
+              on 40+ checks, uses 12 parser-safe templates, and exports pixel-accurate
+              PDFs. There is no account, no subscription, and no upload — your resume is
+              stored only in your browser&apos;s local storage.
+            </Text>
+            <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="lg" mt="sm">
+              {[
+                {
+                  q: "How much does it cost?",
+                  a: "Nothing. LocalCV is free with no paywall or account.",
+                },
+                {
+                  q: "Where is my data stored?",
+                  a: "In your browser's localStorage. Nothing is uploaded.",
+                },
+                {
+                  q: "Is it ATS-friendly?",
+                  a: "Yes — semantic HTML, real text, single reading order.",
+                },
+              ].map((item) => (
+                <Stack key={item.q} gap={4}>
+                  <Text fw={600} size="sm">
+                    {item.q}
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    {item.a}
+                  </Text>
+                </Stack>
+              ))}
+            </SimpleGrid>
+          </Stack>
+        </Container>
+      </Box>
+
+      {/* FAQ — matches the FAQPage structured data */}
+      <Box py={72}>
+        <Container size="md">
+          <Stack gap="xl">
+            <Stack gap={4} ta="center">
+              <Title order={2} c="brand.9">
+                Frequently asked questions
+              </Title>
+              <Text c="dimmed">
+                Everything you need to know about building an ATS-friendly resume with
+                LocalCV.
+              </Text>
+            </Stack>
+            <Accordion variant="separated" radius="md">
+              {FAQS.map((faq) => (
+                <Accordion.Item key={faq.question} value={faq.question}>
+                  <Accordion.Control>
+                    <Text fw={600} size="sm">
+                      {faq.question}
+                    </Text>
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <Text size="sm" c="dimmed">
+                      {faq.answer}
+                    </Text>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              ))}
+            </Accordion>
+          </Stack>
+        </Container>
+      </Box>
+
       {/* CTA */}
       <Box py={80}>
         <Container size="sm" ta="center">
@@ -303,13 +381,16 @@ export function LandingPage() {
       </Box>
 
       {/* Footer */}
-      <Box py="lg" style={{ borderTop: "1px solid var(--mantine-color-gray-2)" }}>
+      <Box component="footer" py="lg" style={{ borderTop: "1px solid var(--mantine-color-gray-2)" }}>
         <Container size="lg">
           <Group justify="space-between">
             <Text size="xs" c="dimmed">
               LocalCV — local-first, ATS-friendly resume builder.
             </Text>
-            <Group gap="xs">
+            <Group gap="md">
+              <Text component={Link} href="/resume" size="xs" c="dimmed">
+                Resume editor
+              </Text>
               <Text size="xs" c="dimmed">
                 Your data never leaves your browser.
               </Text>

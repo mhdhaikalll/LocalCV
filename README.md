@@ -29,6 +29,7 @@ Copy `.env.example` to `.env.local` (never commit real keys):
 
 | Var | Required | Purpose |
 |---|---|---|
+| `NEXT_PUBLIC_SITE_URL` | Recommended | Public origin used for canonical URLs, sitemap, robots, and structured data. Set to your production domain (no trailing slash). |
 | `AI_ENABLED` | No | Set to `true` to enable AI routes. Fail closed when unset. |
 | `OPENAI_API_KEY` | For AI only | OpenAI-compatible API key (server-only) |
 | `OPENAI_BASE_URL` | No | Base URL override for compatible providers. Must be `https:` (or `http:` on localhost), without credentials, and not a private/loopback IP. |
@@ -52,7 +53,16 @@ AI routes fail closed: `403 ai_disabled` when not enabled, `503 ai_not_configure
 npm run build
 ```
 
-Import the repo at [vercel.com/new](https://vercel.com/new), then configure the environment variables above (Project → Settings → Environment Variables). AI stays disabled until `AI_ENABLED=true` and a key are set.
+Import the repo at [vercel.com/new](https://vercel.com/new), then configure the environment variables above (Project → Settings → Environment Variables). AI stays disabled until `AI_ENABLED=true` and a key are set. Set `NEXT_PUBLIC_SITE_URL` to your deployed domain so canonical URLs, the sitemap, and structured data use the right origin.
+
+## SEO & AEO
+
+- Rich metadata (Open Graph, Twitter cards, canonical URLs, keywords) in `src/app/layout.tsx`
+- JSON-LD structured data: `Organization`, `WebSite`, `WebApplication`, `FAQPage`, and `BreadcrumbList` (`src/lib/seo/`)
+- Generated `sitemap.xml`, `robots.txt` (explicitly allows major AI crawlers), and `manifest.webmanifest`
+- Dynamic Open Graph and Twitter images plus an Apple touch icon
+- `/llms.txt` describing the product for AI answer engines
+- Landing page includes an answer-first overview and a visible FAQ matching the structured data
 
 ## Commands
 

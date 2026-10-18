@@ -16,6 +16,11 @@ interface TemplateRendererProps {
   innerRef?: Ref<HTMLDivElement>;
   variant?: TemplateStyleVariant;
   layout?: "single" | "two-column" | "timeline";
+  /**
+   * Use a non-heading element for the name when the preview is decorative
+   * (e.g. the landing page sample), so the page keeps a single real <h1>.
+   */
+  decorative?: boolean;
   children?: ReactNode;
 }
 
@@ -103,11 +108,14 @@ export function TemplateRenderer({
   innerRef,
   variant = "default",
   layout = "single",
+  decorative = false,
   children,
 }: TemplateRendererProps) {
   const s = buildStyleContext(settings, variant);
   const sections = visibleSections(doc) as SectionId[];
   const order = doc.sectionOrder;
+  const NameTag = decorative ? "div" : "h1";
+  const SectionTag = decorative ? "div" : "h2";
 
   const renderSummary = () =>
     isSectionVisible(doc, "summary") ? (
@@ -290,9 +298,8 @@ export function TemplateRenderer({
       {sections.map((section) => (
         <section key={section} style={{ marginBottom: s.blockGap }}>
           {section !== "summary" ? (
-            <h2 style={s.sectionTitleStyle}>
-              {section.charAt(0).toUpperCase() + section.slice(1)}
-            </h2>
+            <SectionTag style={s.sectionTitleStyle}>              {section.charAt(0).toUpperCase() + section.slice(1)}
+            </SectionTag>
           ) : null}
           {sectionRenderers[section]?.() ?? null}
         </section>
@@ -349,7 +356,7 @@ export function TemplateRenderer({
             />
           </div>
         ) : null}
-        <h1 style={s.nameStyle}>{doc.contact.name || "Your Name"}</h1>
+        <NameTag style={s.nameStyle}>{doc.contact.name || "Your Name"}</NameTag>
         {doc.contact.headline ? (
           <p style={{ ...s.entryMetaStyle, margin: "2pt 0" }}>{doc.contact.headline}</p>
         ) : null}
@@ -387,9 +394,8 @@ export function TemplateRenderer({
               }
               return (
                 <div key={section} style={{ marginBottom: s.blockGap }}>
-                  <h2 style={s.sectionTitleStyle}>
-                    {section.charAt(0).toUpperCase() + section.slice(1)}
-                  </h2>
+                  <SectionTag style={s.sectionTitleStyle}>                    {section.charAt(0).toUpperCase() + section.slice(1)}
+                  </SectionTag>
                   {render()}
                 </div>
               );
@@ -409,9 +415,8 @@ export function TemplateRenderer({
               return (
                 <div key={section} style={{ marginBottom: s.blockGap }}>
                   {section !== "summary" ? (
-                    <h2 style={s.sectionTitleStyle}>
-                      {section.charAt(0).toUpperCase() + section.slice(1)}
-                    </h2>
+                    <SectionTag style={s.sectionTitleStyle}>                      {section.charAt(0).toUpperCase() + section.slice(1)}
+                    </SectionTag>
                   ) : null}
                   {render()}
                 </div>

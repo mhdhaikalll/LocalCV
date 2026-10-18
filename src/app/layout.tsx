@@ -1,8 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { ColorSchemeScript, MantineProvider, createTheme, mantineHtmlProps } from "@mantine/core";
+import { SITE } from "@/lib/seo/site";
+import { buildSiteSchema } from "@/lib/seo/schema";
+import { JsonLd } from "@/lib/seo/JsonLd";
 import "./globals.css";
 import "@mantine/core/styles.css";
 
@@ -48,10 +51,62 @@ const theme = createTheme({
 });
 
 export const metadata: Metadata = {
-  title: "LocalCV — ATS-friendly resume builder",
-  description:
-    "Build ATS-friendly resumes in your browser. Local-first, no account required, with deterministic ATS scoring and print-perfect PDF export.",
-  robots: { index: true, follow: true },
+  metadataBase: new URL(SITE.url),
+  title: {
+    default: SITE.title,
+    template: `%s · ${SITE.name}`,
+  },
+  description: SITE.description,
+  applicationName: SITE.name,
+  keywords: [...SITE.keywords],
+  authors: [{ name: SITE.author, url: SITE.github }],
+  creator: SITE.author,
+  publisher: SITE.author,
+  category: "productivity",
+  alternates: {
+    canonical: "/",
+    languages: { "en-US": "/" },
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE.name,
+    locale: SITE.locale,
+    url: SITE.url,
+    title: SITE.title,
+    description: SITE.description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE.title,
+    description: SITE.description,
+  },
+  appleWebApp: {
+    capable: true,
+    title: SITE.name,
+    statusBarStyle: "default",
+  },
+  formatDetection: { telephone: false, address: false, email: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafb" },
+    { media: "(prefers-color-scheme: dark)", color: "#1d4043" },
+  ],
+  colorScheme: "light",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -61,6 +116,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${inter.variable} h-full antialiased`} {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript />
+        <JsonLd data={buildSiteSchema()} />
       </head>
       <body className="min-h-full">
         <MantineProvider theme={theme}>
