@@ -81,6 +81,22 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
     customizable: { font: true, color: true, spacing: true },
     columns: 1,
   },
+  {
+    id: "photo-sidebar",
+    name: "Photo Sidebar",
+    description: "Profile photo beside your name, with a clean two-column body.",
+    atsSafe: true,
+    customizable: { font: true, color: true, spacing: true },
+    columns: 2,
+  },
+  {
+    id: "photo-header",
+    name: "Photo Header",
+    description: "Circular photo centered above a classic single-column layout.",
+    atsSafe: true,
+    customizable: { font: true, color: true, spacing: true },
+    columns: 1,
+  },
 ];
 
 export function getTemplateDescriptor(id: string): TemplateDescriptor {

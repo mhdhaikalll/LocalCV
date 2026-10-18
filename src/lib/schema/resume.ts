@@ -10,6 +10,14 @@ export const ContactSchema = z.object({
   website: z.string().url().optional(),
   linkedin: z.string().url().optional(),
   github: z.string().url().optional(),
+  /** Optional profile photo as a data URL (resized client-side before saving). */
+  photo: z.string().optional(),
+  /** Photo framing: zoom factor (1 = fit, 3 = 3x closer). */
+  photoZoom: z.number().min(1).max(3).optional(),
+  /** Photo framing: horizontal offset in percent (-100..100). */
+  photoOffsetX: z.number().min(-100).max(100).optional(),
+  /** Photo framing: vertical offset in percent (-100..100). */
+  photoOffsetY: z.number().min(-100).max(100).optional(),
 });
 export type Contact = z.infer<typeof ContactSchema>;
 

@@ -64,6 +64,7 @@ export function TemplatePanel() {
               </Text>
               <Badge size="xs" variant="light" color="gray" mt={4}>
                 {t.columns === 2 ? "2 columns" : "single column"} · ATS safe
+                {t.id.startsWith("photo-") ? " · photo" : ""}
               </Badge>
             </Card>
           </UnstyledButton>

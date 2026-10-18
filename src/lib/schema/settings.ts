@@ -13,6 +13,8 @@ export const TemplateIdSchema = z.enum([
   "timeline",
   "compact",
   "academic",
+  "photo-sidebar",
+  "photo-header",
 ]);
 export type TemplateId = z.infer<typeof TemplateIdSchema>;
 

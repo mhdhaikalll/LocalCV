@@ -26,6 +26,60 @@ function contactLine(doc: ResumeDocument): string {
     .join(" | ");
 }
 
+/**
+ * Photo frame that honors the user's zoom/pan adjustments.
+ * The image itself is object-fit: cover inside a clipped frame, then
+ * scaled and translated so the user can frame their face.
+ */
+function PhotoFrame({
+  src,
+  size,
+  shape,
+  borderColor,
+  zoom,
+  offsetX,
+  offsetY,
+}: {
+  src: string;
+  size: string;
+  shape: "circle" | "rounded";
+  borderColor: string;
+  zoom?: number;
+  offsetX?: number;
+  offsetY?: number;
+}) {
+  const z = zoom ?? 1;
+  const x = offsetX ?? 0;
+  const y = offsetY ?? 0;
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        flexShrink: 0,
+        overflow: "hidden",
+        borderRadius: shape === "circle" ? "50%" : "8pt",
+        border: `2pt solid ${borderColor}`,
+        boxSizing: "border-box",
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- data-URL photo; must not go through the image optimizer */}
+      <img
+        src={src}
+        alt=""
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block",
+          transform: `translate(${x}%, ${y}%) scale(${z})`,
+          transformOrigin: "center",
+        }}
+      />
+    </div>
+  );
+}
+
 function bullets(items: string[], listStyle: CSSProperties) {
   if (!items.filter((b) => b.trim()).length) return null;
   return (
@@ -247,6 +301,62 @@ export function TemplateRenderer({
 
   const page = PAGE_SIZES[settings.pageSize];
   const contactInfo = contactLine(doc);
+  const photo = doc.contact.photo;
+  const photoSidebar = variant === "photo-sidebar";
+  const photoHeader = variant === "photo-header";
+  const photoAdjust = {
+    zoom: doc.contact.photoZoom,
+    offsetX: doc.contact.photoOffsetX,
+    offsetY: doc.contact.photoOffsetY,
+  };
+
+  const header = (
+    <header
+      style={
+        photoSidebar
+          ? {
+              display: "flex",
+              alignItems: "center",
+              gap: "16pt",
+              textAlign: "left",
+              marginBottom: `calc(1em * 0.7)`,
+            }
+          : photoHeader
+            ? { ...s.headerStyle, textAlign: "center" }
+            : s.headerStyle
+      }
+    >
+      {photoSidebar && photo ? (
+        <PhotoFrame
+          src={photo}
+          size="76pt"
+          shape="rounded"
+          borderColor={settings.accentColor}
+          {...photoAdjust}
+        />
+      ) : null}
+      <div style={{ textAlign: photoHeader ? "center" : photoSidebar ? "left" : undefined }}>
+        {photoHeader && photo ? (
+          <div style={{ margin: "0 auto 8pt", width: "82pt" }}>
+            <PhotoFrame
+              src={photo}
+              size="82pt"
+              shape="circle"
+              borderColor={settings.accentColor}
+              {...photoAdjust}
+            />
+          </div>
+        ) : null}
+        <h1 style={s.nameStyle}>{doc.contact.name || "Your Name"}</h1>
+        {doc.contact.headline ? (
+          <p style={{ ...s.entryMetaStyle, margin: "2pt 0" }}>{doc.contact.headline}</p>
+        ) : null}
+        {contactInfo ? <p style={s.contactStyle}>{contactInfo}</p> : null}
+      </div>
+    </header>
+  );
+
+  const useTwoColumn = layout === "two-column" || photoSidebar;
 
   return (
     <div
@@ -259,14 +369,8 @@ export function TemplateRenderer({
         minHeight: page.height,
       }}
     >
-      <header style={s.headerStyle}>
-        <h1 style={s.nameStyle}>{doc.contact.name || "Your Name"}</h1>
-        {doc.contact.headline ? (
-          <p style={{ ...s.entryMetaStyle, margin: "2pt 0" }}>{doc.contact.headline}</p>
-        ) : null}
-        {contactInfo ? <p style={s.contactStyle}>{contactInfo}</p> : null}
-      </header>
-      {layout === "two-column" ? (
+      {header}
+      {useTwoColumn ? (
         <div style={{ display: "grid", gridTemplateColumns: "30% 1fr", columnGap: "18pt" }}>
           <div>
             {(["skills", "certifications", "languages", "interests", "education"] as SectionId[]).map((section) => {

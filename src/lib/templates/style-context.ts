@@ -127,7 +127,9 @@ export type TemplateStyleVariant =
   | "minimal"
   | "classic"
   | "academic"
-  | "professional";
+  | "professional"
+  | "photo-sidebar"
+  | "photo-header";
 
 /** Whether a section is visible: visibility toggle on AND non-empty. */
 export function isSectionVisible(doc: ResumeDocument, section: string): boolean {

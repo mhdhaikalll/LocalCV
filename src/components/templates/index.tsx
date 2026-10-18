@@ -35,6 +35,8 @@ export const TwoColumnTemplate = makeTemplate("default", "two-column");
 export const TimelineTemplate = makeTemplate("default", "timeline");
 export const CompactTemplate = makeTemplate("compact");
 export const AcademicTemplate = makeTemplate("academic");
+export const PhotoSidebarTemplate = makeTemplate("photo-sidebar");
+export const PhotoHeaderTemplate = makeTemplate("photo-header");
 
 export const TEMPLATE_COMPONENTS: Record<
   TemplateId,
@@ -50,6 +52,8 @@ export const TEMPLATE_COMPONENTS: Record<
   timeline: TimelineTemplate,
   compact: CompactTemplate,
   academic: AcademicTemplate,
+  "photo-sidebar": PhotoSidebarTemplate,
+  "photo-header": PhotoHeaderTemplate,
 };
 
 export function ResumePreview({
