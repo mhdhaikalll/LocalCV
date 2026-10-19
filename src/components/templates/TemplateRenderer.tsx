@@ -112,6 +112,7 @@ export function TemplateRenderer({
   const sections = visibleSections(doc) as SectionId[];
   const order = doc.sectionOrder;
   const NameTag = decorative ? "div" : "h1";
+  const EntryTag = decorative ? "div" : "h3";
   const SectionTag = decorative ? "div" : "h2";
 
   const renderSummary = () =>
@@ -159,7 +160,7 @@ export function TemplateRenderer({
                 gap: "8pt",
               }}
             >
-              <h3 style={s.entryTitleStyle}>{e.company || e.role}</h3>
+              <EntryTag style={s.entryTitleStyle}>{e.company || e.role}</EntryTag>
               {(e.startDate || e.endDate || e.isCurrent) && (
                 <span style={{ ...s.entryMetaStyle, fontWeight: 600, whiteSpace: "nowrap" }}>
                   {[e.startDate, e.isCurrent ? "Present" : e.endDate]
@@ -181,7 +182,7 @@ export function TemplateRenderer({
       <div style={{ display: "flex", flexDirection: "column", gap: s.entryGap }}>
         {doc.education.map((e) => (
           <div key={e.id} className="resume-entry">
-            <h3 style={s.entryTitleStyle}>{e.school}</h3>
+            <EntryTag style={s.entryTitleStyle}>{e.school}</EntryTag>
             {e.degree ? <p style={{ margin: 0 }}>{e.degree}</p> : null}
             <p style={s.entryMetaStyle}>
               {[e.startDate, e.isCurrent ? "Present" : e.endDate]
@@ -199,7 +200,7 @@ export function TemplateRenderer({
       <div style={{ display: "flex", flexDirection: "column", gap: s.entryGap }}>
         {doc.projects.map((p) => (
           <div key={p.id} className="resume-entry">
-            <h3 style={s.entryTitleStyle}>{p.name}</h3>
+            <EntryTag style={s.entryTitleStyle}>{p.name}</EntryTag>
             {p.description ? <p style={{ margin: 0 }}>{p.description}</p> : null}
             {p.link ? (
               <p style={{ margin: 0 }}>
@@ -261,7 +262,7 @@ export function TemplateRenderer({
       >
         {doc.references.map((r) => (
           <div key={r.id} className="resume-entry">
-            <h3 style={s.entryTitleStyle}>{r.name}</h3>
+            <EntryTag style={s.entryTitleStyle}>{r.name}</EntryTag>
             {r.role ? <p style={{ margin: 0 }}>{r.role}</p> : null}
             {r.company ? <p style={s.entryMetaStyle}>{r.company}</p> : null}
             {r.email ? (
@@ -365,7 +366,7 @@ export function TemplateRenderer({
 
   return (
     <div
-      id="resume-preview"
+      id={decorative ? undefined : "resume-preview"}
       ref={innerRef}
       data-page-size={settings.pageSize}
       style={{

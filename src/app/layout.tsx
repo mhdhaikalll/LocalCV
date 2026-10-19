@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
-import { ColorSchemeScript, MantineProvider, createTheme, mantineHtmlProps } from "@mantine/core";
+import { MantineProvider, createTheme, mantineHtmlProps } from "@mantine/core";
 import { WebAnalytics } from "@/components/analytics/WebAnalytics";
 import { SITE } from "@/lib/seo/site";
 import { buildSiteSchema } from "@/lib/seo/schema";
@@ -116,7 +116,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`} {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript />
         <JsonLd data={buildSiteSchema()} />
       </head>
       <body className="min-h-full">

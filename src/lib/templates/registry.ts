@@ -4,7 +4,7 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
   {
     id: "classic",
     name: "Classic",
-    description: "Traditional serif headings, clean spacing.",
+    description: "Centered header, clear section rules, generous spacing.",
     atsSafe: true,
     customizable: { font: true, color: true, spacing: true },
     columns: 1,
@@ -12,7 +12,7 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
   {
     id: "modern",
     name: "Modern",
-    description: "Bold name header, accent-colored section rules.",
+    description: "Large name, uppercase section labels, accent rules.",
     atsSafe: true,
     customizable: { font: true, color: true, spacing: true },
     columns: 1,
@@ -20,7 +20,7 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
   {
     id: "minimal",
     name: "Minimal",
-    description: "Whitespace-first, minimal color.",
+    description: "Lots of white space and almost no color.",
     atsSafe: true,
     customizable: { font: true, color: true, spacing: true },
     columns: 1,
@@ -28,7 +28,7 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
   {
     id: "professional",
     name: "Professional",
-    description: "Conservative, dense, recruiter-friendly.",
+    description: "Denser layout that fits more history on one page.",
     atsSafe: true,
     customizable: { font: true, color: true, spacing: true },
     columns: 1,
@@ -36,7 +36,7 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
   {
     id: "executive",
     name: "Executive",
-    description: "Summary-forward, larger name block.",
+    description: "Large name block with the summary at the top.",
     atsSafe: true,
     customizable: { font: true, color: true, spacing: true },
     columns: 1,
@@ -44,7 +44,7 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
   {
     id: "creative",
     name: "Creative",
-    description: "Accent color and subtle styling, still single-column.",
+    description: "Accent color and softer styling, still single-column.",
     atsSafe: true,
     customizable: { font: true, color: true, spacing: true },
     columns: 1,
@@ -52,7 +52,7 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
   {
     id: "two-column",
     name: "Two-Column",
-    description: "Left rail (contact/skills), main column (experience).",
+    description: "Skills and education in a side rail, experience in the main column.",
     atsSafe: true,
     customizable: { font: true, color: true, spacing: true },
     columns: 2,
@@ -60,7 +60,7 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
   {
     id: "timeline",
     name: "Timeline",
-    description: "Experience with vertical timeline markers (CSS only).",
+    description: "A vertical line connects your roles in order.",
     atsSafe: true,
     customizable: { font: true, color: true, spacing: true },
     columns: 1,
@@ -68,7 +68,7 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
   {
     id: "compact",
     name: "Compact",
-    description: "Reduced spacing/type for more content per page.",
+    description: "Tighter type and spacing for longer careers.",
     atsSafe: true,
     customizable: { font: true, color: true, spacing: true },
     columns: 1,
@@ -76,7 +76,7 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
   {
     id: "academic",
     name: "Academic",
-    description: "Publications/certifications-forward ordering.",
+    description: "Certifications and publications lead, for research roles.",
     atsSafe: true,
     customizable: { font: true, color: true, spacing: true },
     columns: 1,
@@ -84,7 +84,7 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
   {
     id: "photo-sidebar",
     name: "Photo Sidebar",
-    description: "Profile photo beside your name, with a clean two-column body.",
+    description: "Photo beside your name, with skills in a side rail.",
     atsSafe: true,
     customizable: { font: true, color: true, spacing: true },
     columns: 2,
@@ -92,7 +92,7 @@ export const TEMPLATE_REGISTRY: TemplateDescriptor[] = [
   {
     id: "photo-header",
     name: "Photo Header",
-    description: "Circular photo centered above a classic single-column layout.",
+    description: "Round photo centered above a classic layout.",
     atsSafe: true,
     customizable: { font: true, color: true, spacing: true },
     columns: 1,
