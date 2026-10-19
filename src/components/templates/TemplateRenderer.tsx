@@ -186,7 +186,7 @@ export function TemplateRenderer({
             <p style={s.entryMetaStyle}>
               {[e.startDate, e.isCurrent ? "Present" : e.endDate]
                 .filter(Boolean)
-                .join(" | ")}
+                .join(" – ")}
             </p>
             {bullets(e.bullets, s.listStyle)}
           </div>
