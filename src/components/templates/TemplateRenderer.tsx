@@ -196,24 +196,21 @@ export function TemplateRenderer({
 
   const renderProjects = () =>
     order.includes("projects") && isSectionVisible(doc, "projects") ? (
-      <div style={{ display: "Flex", flexDirection: "column", gap: s.entryGap }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: s.entryGap }}>
         {doc.projects.map((p) => (
           <div key={p.id} className="resume-entry">
-            <h3 style={s.entryTitleStyle}>
-              {p.name}
-              {p.link ? (
-                <>
-                  {" — "}
-                  <a
-                    href={p.link}
-                    style={{ color: settings.accentColor, textDecoration: "none" }}
-                  >
-                    {p.link}
-                  </a>
-                </>
-              ) : null}
-            </h3>
+            <h3 style={s.entryTitleStyle}>{p.name}</h3>
             {p.description ? <p style={{ margin: 0 }}>{p.description}</p> : null}
+            {p.link ? (
+              <p style={{ margin: 0 }}>
+                <a
+                  href={p.link}
+                  style={{ color: settings.accentColor, textDecoration: "none" }}
+                >
+                  {p.link}
+                </a>
+              </p>
+            ) : null}
             {bullets(p.bullets, s.listStyle)}
           </div>
         ))}
