@@ -30,6 +30,7 @@ Copy `.env.example` to `.env.local` (never commit real keys):
 | Var | Required | Purpose |
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | Recommended | Public origin used for canonical URLs, sitemap, robots, and structured data. Set to your production domain (no trailing slash). |
+| `NEXT_PUBLIC_CF_ANALYTICS_TOKEN` | No | Cloudflare Web Analytics beacon token. Loaded after hydration and skipped on `/resume`. |
 | `AI_ENABLED` | No | Set to `true` to enable AI routes. Fail closed when unset. |
 | `OPENAI_API_KEY` | For AI only | OpenAI-compatible API key (server-only) |
 | `OPENAI_BASE_URL` | No | Base URL override for compatible providers. Must be `https:` (or `http:` on localhost), without credentials, and not a private/loopback IP. |

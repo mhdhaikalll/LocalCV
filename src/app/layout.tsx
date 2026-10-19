@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { ColorSchemeScript, MantineProvider, createTheme, mantineHtmlProps } from "@mantine/core";
+import { WebAnalytics } from "@/components/analytics/WebAnalytics";
 import { SITE } from "@/lib/seo/site";
 import { buildSiteSchema } from "@/lib/seo/schema";
 import { JsonLd } from "@/lib/seo/JsonLd";
@@ -124,6 +125,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             {children}
           </NextIntlClientProvider>
         </MantineProvider>
+        <WebAnalytics />
       </body>
     </html>
   );
