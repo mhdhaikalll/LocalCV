@@ -28,10 +28,10 @@ import {
   IconFileUpload,
   IconLayoutGrid,
   IconRobot,
-  IconX,
 } from "@tabler/icons-react";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { useAiEnabled } from "@/lib/ai/use-ai-enabled";
+import { EditorTour } from "./EditorTour";
 import { useUndoRedoShortcuts } from "@/lib/store/use-undo-redo";
 import { computeAtsScore } from "@/lib/ats/scoring";
 import { exportJson } from "@/lib/export/json";
@@ -104,6 +104,7 @@ function ScoreBadge({ onClick }: { onClick: () => void }) {
         size="lg"
         color={color}
         variant="filled"
+        data-tour="ats"
         style={{ cursor: "pointer", textTransform: "none" }}
         onClick={onClick}
       >
@@ -186,7 +187,7 @@ export function Editor() {
 
   const [panel, setPanel] = useState<Panel>("none");
   const [mobileTab, setMobileTab] = useState<MobileTab>("form");
-  const [showOnboarding, setShowOnboarding] = useState(true);
+  const hydrated = useResumeStore((s) => s.hydrated);
   const isMobile = useMediaQuery("(max-width: 48em)");
 
   useUndoRedoShortcuts();
@@ -204,6 +205,10 @@ export function Editor() {
 
   const isEmpty = !document.contact.name.trim() && !document.summary.trim();
 
+  // The tour itself decides whether this visitor is new (empty resume and no
+  // stored tour flag); here we only wait for the store to hydrate.
+  const tourEnabled = hydrated;
+
   const triggerPrint = () => {
     if (isEmpty && !window.confirm("The resume looks empty. Export anyway?")) {
       return;
@@ -219,7 +224,7 @@ export function Editor() {
         main: { height: "100dvh", display: "flex", flexDirection: "column" },
       }}
     >
-      <AppShell.Header>
+      <AppShell.Header data-tour="header">
         <Group h="100%" px="sm" justify="space-between" wrap="nowrap" gap="xs">
           <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
             <Title order={4} textWrap="nowrap">
@@ -254,7 +259,12 @@ export function Editor() {
               <ScoreBadge onClick={() => openPanel("ats")} />
               <Menu position="bottom-end" withinPortal>
                 <Menu.Target>
-                  <ActionIcon variant="default" size="lg" aria-label="More actions">
+                  <ActionIcon
+                    variant="default"
+                    size="lg"
+                    aria-label="More actions"
+                    data-tour="template"
+                  >
                     <IconDotsVertical size={18} />
                   </ActionIcon>
                 </Menu.Target>
@@ -334,6 +344,7 @@ export function Editor() {
                 variant="default"
                 size="compact-sm"
                 leftSection={<IconLayoutGrid size={14} />}
+                data-tour="template"
                 onClick={() => openPanel("template")}
               >
                 Template
@@ -383,32 +394,8 @@ export function Editor() {
           </Group>
         )}
 
-        {showOnboarding && (
-          <Group
-            justify="space-between"
-            bg="gray.0"
-            px="md"
-            py={6}
-            style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}
-          >
-            <Text size="xs" c="dimmed">
-              Start with your name and contact info — everything saves automatically in
-              this browser.
-            </Text>
-            <ActionIcon
-              variant="subtle"
-              size="sm"
-              color="gray"
-              onClick={() => setShowOnboarding(false)}
-              aria-label="Dismiss onboarding hint"
-            >
-              <IconX size={14} />
-            </ActionIcon>
-          </Group>
-        )}
-
         {/* Mobile toggle */}
-        <Box hiddenFrom="md" p="xs">
+        <Box hiddenFrom="md" p="xs" data-tour="mobile-tabs">
           <SegmentedControl
             fullWidth
             size="xs"
@@ -426,6 +413,7 @@ export function Editor() {
           {/* Left: form */}
           <Box
             className={`editor-form-pane${mobileTab === "form" ? "" : " editor-pane-hidden-mobile"}`}
+            data-tour="form"
             w={{ base: "100%", md: "40%" }}
             style={{
               flexDirection: "column",
@@ -470,6 +458,7 @@ export function Editor() {
           <Box
             flex={1}
             miw={0}
+            data-tour="preview"
             className={`editor-preview-pane${mobileTab === "preview" ? "" : " editor-pane-hidden-mobile"}`}
             aria-label="Live resume preview"
           >
@@ -520,6 +509,12 @@ export function Editor() {
         >
           <ImportPanel />
         </Drawer>
+        <EditorTour
+          enabled={tourEnabled}
+          isEmpty={isEmpty}
+          isMobile={isMobile}
+          onBeforeStart={() => setMobileTab("form")}
+        />
       </AppShell.Main>
     </AppShell>
   );
