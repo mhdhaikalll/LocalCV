@@ -1,17 +1,34 @@
 import { z } from "zod";
 
+/**
+ * Treat blank optional inputs as absent. Text inputs in the editor produce ""
+ * when cleared, and a backup containing "" must still round-trip through
+ * import instead of failing URL/email validation.
+ */
+function blankToUndefined(value: unknown): unknown {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed === "" ? undefined : trimmed;
+  }
+  return value;
+}
+
+const optionalText = z.preprocess(blankToUndefined, z.string().optional());
+const optionalEmail = z.preprocess(blankToUndefined, z.string().email().optional());
+const optionalUrl = z.preprocess(blankToUndefined, z.string().url().optional());
+
 // ---- Contact ----
 export const ContactSchema = z.object({
   name: z.string(),
-  headline: z.string().optional(),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
-  location: z.string().optional(),
-  website: z.string().url().optional(),
-  linkedin: z.string().url().optional(),
-  github: z.string().url().optional(),
+  headline: optionalText,
+  email: optionalEmail,
+  phone: optionalText,
+  location: optionalText,
+  website: optionalUrl,
+  linkedin: optionalUrl,
+  github: optionalUrl,
   /** Optional profile photo as a data URL (resized client-side before saving). */
-  photo: z.string().optional(),
+  photo: optionalText,
   /** Photo framing: zoom factor (1 = fit, 3 = 3x closer). */
   photoZoom: z.number().min(1).max(3).optional(),
   /** Photo framing: horizontal offset in percent (-100..100). */
@@ -51,8 +68,8 @@ export type Education = z.infer<typeof EducationSchema>;
 export const ProjectSchema = z.object({
   id: z.string(),
   name: z.string(),
-  description: z.string().optional(),
-  link: z.string().url().optional(),
+  description: optionalText,
+  link: optionalUrl,
   bullets: z.array(z.string()).default([]),
 });
 export type Project = z.infer<typeof ProjectSchema>;
@@ -69,9 +86,9 @@ export type SkillGroup = z.infer<typeof SkillGroupSchema>;
 export const CertificateSchema = z.object({
   id: z.string(),
   name: z.string(),
-  issuer: z.string().optional(),
-  date: z.string().optional(),
-  link: z.string().url().optional(),
+  issuer: optionalText,
+  date: optionalText,
+  link: optionalUrl,
 });
 export type Certificate = z.infer<typeof CertificateSchema>;
 
@@ -79,9 +96,9 @@ export type Certificate = z.infer<typeof CertificateSchema>;
 export const ReferenceSchema = z.object({
   id: z.string(),
   name: z.string(),
-  role: z.string().optional(),
-  company: z.string().optional(),
-  email: z.string().email().optional(),
+  role: optionalText,
+  company: optionalText,
+  email: optionalEmail,
 });
 export type Reference = z.infer<typeof ReferenceSchema>;
 
