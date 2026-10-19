@@ -40,7 +40,6 @@ function PhotoFrame({
   src,
   size,
   shape,
-  borderColor,
   zoom,
   offsetX,
   offsetY,
@@ -48,7 +47,6 @@ function PhotoFrame({
   src: string;
   size: string;
   shape: "circle" | "rounded";
-  borderColor: string;
   zoom?: number;
   offsetX?: number;
   offsetY?: number;
@@ -64,7 +62,6 @@ function PhotoFrame({
         flexShrink: 0,
         overflow: "hidden",
         borderRadius: shape === "circle" ? "50%" : "8pt",
-        border: `2pt solid ${borderColor}`,
         boxSizing: "border-box",
       }}
     >
@@ -174,11 +171,8 @@ export function TemplateRenderer({
       <div style={{ display: "flex", flexDirection: "column", gap: s.entryGap }}>
         {doc.education.map((e) => (
           <div key={e.id} className="resume-entry">
-            <h3 style={s.entryTitleStyle}>
-              {e.school}
-              {e.degree ? ` — ${e.degree}` : ""}
-              {e.field ? `, ${e.field}` : ""}
-            </h3>
+            <h3 style={s.entryTitleStyle}>{e.school}</h3>
+            {e.degree ? <p style={{ margin: 0 }}>{e.degree}</p> : null}
             <p style={s.entryMetaStyle}>
               {[e.startDate, e.endDate].filter(Boolean).join(" | ")}
             </p>
@@ -340,7 +334,6 @@ export function TemplateRenderer({
           src={photo}
           size="76pt"
           shape="rounded"
-          borderColor={settings.accentColor}
           {...photoAdjust}
         />
       ) : null}
@@ -351,7 +344,6 @@ export function TemplateRenderer({
               src={photo}
               size="82pt"
               shape="circle"
-              borderColor={settings.accentColor}
               {...photoAdjust}
             />
           </div>

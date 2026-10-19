@@ -88,8 +88,7 @@ function buildSampleDocument(): ResumeDocument {
     {
       id: "sample-e1",
       school: "University of Washington",
-      degree: "BDes",
-      field: "Interaction Design",
+      degree: "BDes, Interaction Design",
       startDate: "2013",
       endDate: "2017",
       bullets: [],

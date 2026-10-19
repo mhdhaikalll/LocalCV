@@ -62,17 +62,12 @@ export function EducationForm() {
               value={item.school}
               onChange={(e) => patch(i, { school: e.target.value })}
             />
+            <TextInput
+              label="Degree"
+              value={item.degree ?? ""}
+              onChange={(e) => patch(i, { degree: e.target.value })}
+            />
             <SimpleGrid cols={2}>
-              <TextInput
-                label="Degree"
-                value={item.degree ?? ""}
-                onChange={(e) => patch(i, { degree: e.target.value })}
-              />
-              <TextInput
-                label="Field"
-                value={item.field ?? ""}
-                onChange={(e) => patch(i, { field: e.target.value })}
-              />
               <TextInput
                 label="Start"
                 value={item.startDate ?? ""}

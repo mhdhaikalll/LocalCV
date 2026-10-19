@@ -189,11 +189,15 @@ export async function parseResumeFile(file: File): Promise<ParseResult> {
           );
         } else {
           const parts = line.split(/[,|–-]/);
+          const degree = parts
+            .slice(1)
+            .map((p) => p.trim())
+            .filter(Boolean)
+            .join(", ");
           doc.education.push({
             id: uuid(),
             school: parts[0]?.trim() ?? line,
-            degree: parts[1]?.trim(),
-            field: parts[2]?.trim(),
+            degree: degree || undefined,
             startDate: line.match(DATE_RE)?.[0]?.split(/[-–]/)[0]?.trim(),
             endDate: line.match(DATE_RE)?.[0]?.split(/[-–]/)[1]?.trim(),
             bullets: [],
