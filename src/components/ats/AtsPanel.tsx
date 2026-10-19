@@ -14,6 +14,7 @@ import {
   Text,
   Textarea,
   ThemeIcon,
+  Tooltip,
 } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 import { useResumeStore } from "@/lib/store/resume-store";
@@ -21,6 +22,7 @@ import { computeAtsScore } from "@/lib/ats/scoring";
 import { resumeToText } from "@/lib/ats/scoring";
 import { requestAtsReview, AiError, type AtsReviewFeedback } from "@/lib/ai/client";
 import { sanitizeAiText } from "@/lib/ai/sanitize";
+import { useAiEnabled } from "@/lib/ai/use-ai-enabled";
 
 function scoreColor(score: number): string {
   if (score >= 75) return "green";
@@ -29,6 +31,7 @@ function scoreColor(score: number): string {
 }
 
 export function AtsPanel() {
+  const aiEnabled = useAiEnabled();
   const document = useResumeStore((s) => s.document);
   const settings = useResumeStore((s) => s.settings);
   const jobDescription = useResumeStore((s) => s.jobDescription);
@@ -48,6 +51,7 @@ export function AtsPanel() {
   );
 
   const runAiReview = async () => {
+    if (!aiEnabled) return;
     setAiLoading(true);
     setAiError(null);
     try {
@@ -177,24 +181,35 @@ export function AtsPanel() {
           AI deep review (optional)
         </Text>
         <Text size="xs" c="dimmed" mb="xs">
-          Privacy: this sends your resume text and job description to the server AI
-          provider. Everything else stays in your browser.
+          {aiEnabled
+            ? "Privacy: this sends your resume text and job description to the server AI provider. Everything else stays in your browser."
+            : "AI deep review is coming soon. The local ATS score above keeps working without it."}
         </Text>
         <Checkbox
           label="I understand and consent to sending my resume content for AI review."
           size="xs"
           mb="xs"
+          disabled={!aiEnabled}
           checked={aiConsent}
           onChange={(e) => setAiConsent(e.target.checked)}
         />
-        <Button
-          size="xs"
-          disabled={!aiConsent || !jobDescription.trim() || aiLoading}
-          loading={aiLoading}
-          onClick={runAiReview}
+        <Tooltip
+          label="AI features are coming soon"
+          withArrow
+          disabled={aiEnabled}
+          events={{ hover: true, focus: false, touch: true }}
         >
-          Run AI deep review
-        </Button>
+          <span style={{ display: "block" }}>
+            <Button
+              size="xs"
+              disabled={!aiEnabled || !aiConsent || !jobDescription.trim() || aiLoading}
+              loading={aiLoading}
+              onClick={runAiReview}
+            >
+              Run AI deep review
+            </Button>
+          </span>
+        </Tooltip>
         {aiError && (
           <Alert color="red" variant="light" mt="xs" title="Error">
             <Text size="xs">{aiError}</Text>

@@ -31,6 +31,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { useResumeStore } from "@/lib/store/resume-store";
+import { useAiEnabled } from "@/lib/ai/use-ai-enabled";
 import { useUndoRedoShortcuts } from "@/lib/store/use-undo-redo";
 import { computeAtsScore } from "@/lib/ats/scoring";
 import { exportJson } from "@/lib/export/json";
@@ -174,6 +175,7 @@ function PreviewScaler({ children }: { children: React.ReactNode }) {
 
 export function Editor() {
   const t = useTranslations();
+  const aiEnabled = useAiEnabled();
   const document = useResumeStore((s) => s.document);
   const settings = useResumeStore((s) => s.settings);
   const undo = useResumeStore((s) => s.undo);
@@ -279,6 +281,14 @@ export function Editor() {
                   <Menu.Item
                     leftSection={<IconRobot size={16} />}
                     onClick={() => openPanel("ai")}
+                    disabled={!aiEnabled}
+                    rightSection={
+                      aiEnabled ? null : (
+                        <Text size="xs" c="dimmed">
+                          Coming soon
+                        </Text>
+                      )
+                    }
                   >
                     AI assistant
                   </Menu.Item>
@@ -302,14 +312,24 @@ export function Editor() {
               >
                 Import
               </Button>
-              <Button
-                variant="default"
-                size="compact-sm"
-                leftSection={<IconRobot size={14} />}
-                onClick={() => openPanel("ai")}
+              <Tooltip
+                label="AI features are coming soon"
+                withArrow
+                disabled={aiEnabled}
+                events={{ hover: true, focus: true, touch: true }}
               >
-                AI
-              </Button>
+                <span>
+                  <Button
+                    variant="default"
+                    size="compact-sm"
+                    leftSection={<IconRobot size={14} />}
+                    disabled={!aiEnabled}
+                    onClick={() => openPanel("ai")}
+                  >
+                    AI
+                  </Button>
+                </span>
+              </Tooltip>
               <Button
                 variant="default"
                 size="compact-sm"

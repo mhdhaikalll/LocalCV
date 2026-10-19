@@ -12,11 +12,14 @@ import {
   Stack,
   Text,
   Textarea,
+  Tooltip,
 } from "@mantine/core";
 import { requestAi, AiError, type AiAction } from "@/lib/ai/client";
 import { sanitizeAiText } from "@/lib/ai/sanitize";
+import { useAiEnabled } from "@/lib/ai/use-ai-enabled";
 
 export function AiPanel() {
+  const aiEnabled = useAiEnabled();
   const [content, setContent] = useState("");
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -25,6 +28,7 @@ export function AiPanel() {
   const [action, setAction] = useState<AiAction>("rewrite");
 
   const run = async () => {
+    if (!aiEnabled) return;
     setLoading(true);
     setError(null);
     try {
@@ -52,11 +56,18 @@ export function AiPanel() {
   return (
     <Stack gap="md">
       <Alert color="gray" variant="light">
-        <Text size="xs">
-          Privacy: the text you submit below is sent to the server AI provider. Your
-          stored resume never leaves your browser except when you explicitly run an
-          AI action.
-        </Text>
+        {aiEnabled ? (
+          <Text size="xs">
+            Privacy: the text you submit below is sent to the server AI provider. Your
+            stored resume never leaves your browser except when you explicitly run an
+            AI action.
+          </Text>
+        ) : (
+          <Text size="xs">
+            AI features are coming soon. This panel stays visible so you can preview
+            what will be available.
+          </Text>
+        )}
       </Alert>
 
       <Textarea
@@ -87,14 +98,24 @@ export function AiPanel() {
         onChange={(e) => setConsent(e.target.checked)}
       />
 
-      <Button
-        size="xs"
-        disabled={!consent || !content.trim() || loading}
-        loading={loading}
-        onClick={run}
+      <Tooltip
+        label="AI features are coming soon"
+        withArrow
+        disabled={aiEnabled}
+        events={{ hover: true, focus: false, touch: true }}
       >
-        Run {action}
-      </Button>
+        <span style={{ display: "block" }}>
+          <Button
+            size="xs"
+            fullWidth
+            disabled={!aiEnabled || !consent || !content.trim() || loading}
+            loading={loading}
+            onClick={run}
+          >
+            Run {action}
+          </Button>
+        </span>
+      </Tooltip>
 
       {error && (
         <Alert color="red" variant="light" title="Error">
