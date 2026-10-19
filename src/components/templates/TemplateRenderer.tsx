@@ -151,15 +151,25 @@ export function TemplateRenderer({
                 }}
               />
             ) : null}
-            <h3 style={s.entryTitleStyle}>
-              {e.role}
-              {e.company ? ` — ${e.company}` : ""}
-            </h3>
-            <p style={s.entryMetaStyle}>
-              {[e.location, e.startDate, e.isCurrent ? "Present" : e.endDate]
-                .filter((v): v is string => typeof v === "string" && v.trim() !== "")
-                .join(" | ")}
-            </p>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                gap: "8pt",
+              }}
+            >
+              <h3 style={s.entryTitleStyle}>{e.company || e.role}</h3>
+              {(e.startDate || e.endDate || e.isCurrent) && (
+                <span style={{ ...s.entryMetaStyle, fontWeight: 600, whiteSpace: "nowrap" }}>
+                  {[e.startDate, e.isCurrent ? "Present" : e.endDate]
+                    .filter((v): v is string => typeof v === "string" && v.trim() !== "")
+                    .join(" – ")}
+                </span>
+              )}
+            </div>
+            {e.company && e.role ? <p style={{ margin: 0 }}>{e.role}</p> : null}
+            {e.location ? <p style={s.entryMetaStyle}>{e.location}</p> : null}
             {bullets(e.bullets, s.listStyle)}
           </div>
         ))}
@@ -174,7 +184,9 @@ export function TemplateRenderer({
             <h3 style={s.entryTitleStyle}>{e.school}</h3>
             {e.degree ? <p style={{ margin: 0 }}>{e.degree}</p> : null}
             <p style={s.entryMetaStyle}>
-              {[e.startDate, e.endDate].filter(Boolean).join(" | ")}
+              {[e.startDate, e.isCurrent ? "Present" : e.endDate]
+                .filter(Boolean)
+                .join(" | ")}
             </p>
             {bullets(e.bullets, s.listStyle)}
           </div>

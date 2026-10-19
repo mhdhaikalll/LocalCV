@@ -199,7 +199,11 @@ export async function parseResumeFile(file: File): Promise<ParseResult> {
             school: parts[0]?.trim() ?? line,
             degree: degree || undefined,
             startDate: line.match(DATE_RE)?.[0]?.split(/[-–]/)[0]?.trim(),
-            endDate: line.match(DATE_RE)?.[0]?.split(/[-–]/)[1]?.trim(),
+            endDate:
+              line.match(DATE_RE)?.[0]?.split(/[-–]/)[1]?.trim() === "Present"
+                ? undefined
+                : line.match(DATE_RE)?.[0]?.split(/[-–]/)[1]?.trim(),
+            isCurrent: /present|current/i.test(line),
             bullets: [],
           });
         }

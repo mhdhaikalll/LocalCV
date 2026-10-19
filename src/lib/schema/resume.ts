@@ -42,6 +42,7 @@ export const EducationSchema = z.object({
   field: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  isCurrent: z.boolean().default(false),
   bullets: z.array(z.string()).default([]),
 });
 export type Education = z.infer<typeof EducationSchema>;

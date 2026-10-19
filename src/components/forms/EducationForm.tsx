@@ -4,6 +4,7 @@ import {
   ActionIcon,
   Button,
   Card,
+  Checkbox,
   Group,
   SimpleGrid,
   Stack,
@@ -18,7 +19,7 @@ import { uuid } from "@/lib/uuid";
 import type { Education } from "@/lib/schema";
 
 function newEducation(): Education {
-  return { id: uuid(), school: "", bullets: [] };
+  return { id: uuid(), school: "", isCurrent: false, bullets: [] };
 }
 
 export function EducationForm() {
@@ -75,10 +76,17 @@ export function EducationForm() {
               />
               <TextInput
                 label="End"
-                value={item.endDate ?? ""}
+                placeholder="2017"
+                value={item.isCurrent ? "Present" : (item.endDate ?? "")}
+                disabled={item.isCurrent}
                 onChange={(e) => patch(i, { endDate: e.target.value })}
               />
             </SimpleGrid>
+            <Checkbox
+              label="Currently studying here"
+              checked={item.isCurrent}
+              onChange={(e) => patch(i, { isCurrent: e.target.checked })}
+            />
             <Textarea
               label="Notes (one per line)"
               minRows={3}

@@ -91,6 +91,7 @@ function buildSampleDocument(): ResumeDocument {
       degree: "BDes, Interaction Design",
       startDate: "2013",
       endDate: "2017",
+      isCurrent: false,
       bullets: [],
     },
   ];
