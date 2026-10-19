@@ -262,13 +262,8 @@ export function TemplateRenderer({
         {doc.references.map((r) => (
           <div key={r.id} className="resume-entry">
             <h3 style={s.entryTitleStyle}>{r.name}</h3>
-            {r.role || r.company ? (
-              <p style={s.entryMetaStyle}>
-                {[r.role, r.company]
-                  .filter((v): v is string => typeof v === "string" && v.trim() !== "")
-                  .join(" — ")}
-              </p>
-            ) : null}
+            {r.role ? <p style={{ margin: 0 }}>{r.role}</p> : null}
+            {r.company ? <p style={s.entryMetaStyle}>{r.company}</p> : null}
             {r.email ? (
               <p style={{ ...s.entryMetaStyle, color: settings.accentColor }}>
                 {r.email}
