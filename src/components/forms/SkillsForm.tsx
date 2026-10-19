@@ -14,6 +14,7 @@ import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { uuid } from "@/lib/uuid";
 import type { SkillGroup } from "@/lib/schema";
+import { CommaListInput } from "./CommaListInput";
 
 function newGroup(): SkillGroup {
   return { id: uuid(), category: "", items: [] };
@@ -61,18 +62,11 @@ export function SkillsForm() {
               value={group.category}
               onChange={(e) => patch(i, { category: e.target.value })}
             />
-            <TextInput
+            <CommaListInput
               label="Items (comma-separated)"
               placeholder="TypeScript, Python, SQL"
-              value={group.items.join(", ")}
-              onChange={(e) =>
-                patch(i, {
-                  items: e.target.value
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                })
-              }
+              value={group.items}
+              onChange={(items) => patch(i, { items })}
             />
           </Stack>
         </Card>

@@ -1,7 +1,7 @@
 "use client";
 
-import { TextInput } from "@mantine/core";
 import { useResumeStore } from "@/lib/store/resume-store";
+import { CommaListInput } from "./CommaListInput";
 
 export function ListForm({
   field,
@@ -16,16 +16,13 @@ export function ListForm({
   const updateDocument = useResumeStore((s) => s.updateDocument);
 
   return (
-    <TextInput
+    <CommaListInput
       label={`${label} (comma-separated)`}
       placeholder={placeholder}
-      value={value.join(", ")}
-      onChange={(e) =>
+      value={value}
+      onChange={(items) =>
         updateDocument((draft) => {
-          draft[field] = e.target.value
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
+          draft[field] = items;
           return draft;
         })
       }
