@@ -131,8 +131,7 @@ export type TemplateStyleVariant =
   | "photo-sidebar"
   | "photo-header";
 
-/** Whether a section is visible: visibility toggle on AND non-empty. */
-export function isSectionVisible(doc: ResumeDocument, section: string): boolean {
+/** Whether a section is visible: visibility toggle on AND non-empty. */export function isSectionVisible(doc: ResumeDocument, section: string): boolean {
   const toggled = doc.sectionVisibility[section as keyof typeof doc.sectionVisibility] ?? true;
   if (!toggled) return false;
   return !isSectionEmpty(doc, section);
@@ -152,6 +151,10 @@ export function isSectionEmpty(doc: ResumeDocument, section: string): boolean {
       return doc.skills.every((g) => g.items.length === 0);
     case "certifications":
       return doc.certifications.length === 0;
+    case "extracurriculars":
+      return !doc.extracurriculars.some(
+        (e) => e.organization.trim() !== "" || e.role?.trim() || e.bullets.some((b) => b.trim()),
+      );
     case "references":
       return doc.references.length === 0;
     case "languages":

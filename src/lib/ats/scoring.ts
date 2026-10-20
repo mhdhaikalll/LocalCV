@@ -62,6 +62,11 @@ export function resumeToText(doc: ResumeDocument): string {
     ...doc.projects.flatMap((p) => [p.name, p.description ?? "", p.bullets.join(" ")]),
     ...doc.skills.flatMap((g) => [g.category, ...g.items]),
     ...doc.certifications.map((c) => `${c.name} ${c.issuer ?? ""}`),
+    ...doc.extracurriculars.flatMap((e) => [
+      e.organization,
+      e.role ?? "",
+      e.bullets.join(" "),
+    ]),
     ...doc.references.flatMap((r) => [r.name, r.role ?? "", r.company ?? ""]),
     doc.languages.join(" "),
     doc.interests.join(" "),
@@ -72,6 +77,10 @@ export function resumeToText(doc: ResumeDocument): string {
 const SECTION_FOR_KEYWORD: { test: RegExp; section: SectionId }[] = [
   { test: /^(led|managed|built|designed|developed|delivered|improved|increased|reduced)/i, section: "experience" },
   { test: /(certif|certificate|pmp|cisa|cpa|license)/i, section: "certifications" },
+  {
+    test: /(volunteer|community|club|society|committee|mentor|leadership)/i,
+    section: "extracurriculars",
+  },
   { test: /(university|college|bachelor|master|phd|degree|school)/i, section: "education" },
 ];
 

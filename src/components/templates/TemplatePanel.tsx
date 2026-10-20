@@ -19,7 +19,7 @@ import { IconArrowDown, IconArrowUp } from "@tabler/icons-react";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { TEMPLATE_REGISTRY } from "@/lib/templates/registry";
 import { FONT_STACKS } from "@/lib/templates/style-context";
-import { ResumeSettingsSchema } from "@/lib/schema";
+import { ResumeSettingsSchema, SECTION_LABELS } from "@/lib/schema";
 
 export function TemplatePanel() {
   const settings = useResumeStore((s) => s.settings);
@@ -162,7 +162,7 @@ export function TemplatePanel() {
           {document.sectionOrder.map((id, i) => (
             <Group key={id} justify="space-between" wrap="nowrap">
               <Text size="sm" style={{ textTransform: "capitalize" }}>
-                {id}
+                {SECTION_LABELS[id]}
               </Text>
               <Group gap={4} wrap="nowrap">
                 <Tooltip label="Move up" withArrow>

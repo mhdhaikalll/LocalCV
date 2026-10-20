@@ -15,12 +15,14 @@ export {
   WorkExperienceSchema,
   EducationSchema,
   ProjectSchema,
+  ExtracurricularSchema,
   SkillGroupSchema,
   CertificateSchema,
   ReferenceSchema,
   SectionIdSchema,
   ResumeDocumentSchema,
   DEFAULT_SECTION_ORDER,
+  SECTION_LABELS,
   createEmptyDocument,
 } from "./resume";
 export type {
@@ -28,6 +30,7 @@ export type {
   WorkExperience,
   Education,
   Project,
+  Extracurricular,
   SkillGroup,
   Certificate,
   Reference,
@@ -176,6 +179,18 @@ function sanitizeProject(value: unknown) {
   };
 }
 
+function sanitizeExtracurricular(value: unknown) {
+  const e = record(value);
+  const legacyRange = [text(e.startDate), text(e.endDate)].filter(Boolean).join(" – ");
+  return {
+    id: id(e.id),
+    organization: plainText(e.organization ?? e.name ?? e.company),
+    role: text(e.role),
+    date: text(e.date) ?? (legacyRange || undefined),
+    bullets: strings(e.bullets),
+  };
+}
+
 function sanitizeSkillGroup(value: unknown) {
   const s = record(value);
   return {
@@ -231,7 +246,16 @@ function sanitizeSectionVisibility(value: unknown): Record<SectionId_impl, boole
  */
 export function sanitizeDocument(input: unknown): ResumeDocument_impl {
   const parsed = ResumeDocumentSchema_impl.safeParse(input);
-  if (parsed.success) return parsed.data;
+  if (parsed.success) {
+    // Older saved documents predate newer sections, so their sectionOrder and
+    // visibility records may be missing entries. Normalize both every time.
+    const normalized = ResumeDocumentSchema_impl.safeParse({
+      ...parsed.data,
+      sectionOrder: sanitizeSectionOrder(parsed.data.sectionOrder),
+      sectionVisibility: sanitizeSectionVisibility(parsed.data.sectionVisibility),
+    });
+    return normalized.success ? normalized.data : parsed.data;
+  }
 
   const raw = record(input);
   const candidate = {
@@ -243,6 +267,7 @@ export function sanitizeDocument(input: unknown): ResumeDocument_impl {
     projects: list(raw.projects).map(sanitizeProject),
     skills: list(raw.skills).map(sanitizeSkillGroup),
     certifications: list(raw.certifications).map(sanitizeCertificate),
+    extracurriculars: list(raw.extracurriculars).map(sanitizeExtracurricular),
     references: list(raw.references).map(sanitizeReference).slice(0, 2),
     languages: strings(raw.languages),
     interests: strings(raw.interests),

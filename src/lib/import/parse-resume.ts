@@ -21,9 +21,18 @@ const SECTION_HEADERS: Record<string, string> = {
   projects: "projects",
   certifications: "certifications",
   certificates: "certifications",
+  extracurriculars: "extracurriculars",
+  extracurricular: "extracurriculars",
+  "extracurricular activities": "extracurriculars",
+  activities: "extracurriculars",
+  "leadership": "extracurriculars",
+  "leadership experience": "extracurriculars",
+  "volunteer experience": "extracurriculars",
+  "volunteering": "extracurriculars",
+  "community involvement": "extracurriculars",
   languages: "languages",
   interests: "interests",
-  activities: "interests",
+  hobbies: "interests",
 };
 
 const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
@@ -257,6 +266,25 @@ export async function parseResumeFile(file: File): Promise<ParseResult> {
         });
       }
       items += doc.certifications.length;
+    } else if (section.header === "extracurriculars") {
+      for (const line of body) {
+        if (/^[-•●▪◦·]/.test(line) && doc.extracurriculars.length) {
+          doc.extracurriculars[doc.extracurriculars.length - 1].bullets.push(
+            line.replace(/^[-•●▪◦·]\s*/, "").trim(),
+          );
+          continue;
+        }
+        const dateMatch = line.match(DATE_RE);
+        const atSplit = line.split(/\s+(?:at|@|–|-|—)\s+/);
+        doc.extracurriculars.push({
+          id: uuid(),
+          organization: atSplit[1]?.split(",")[0]?.trim() || atSplit[0]?.trim() || line,
+          role: atSplit[1] ? atSplit[0]?.trim() : undefined,
+          date: dateMatch?.[0].trim(),
+          bullets: [],
+        });
+      }
+      items += doc.extracurriculars.length;
     } else if (section.header === "languages") {
       doc.languages = parseBullets(body)[0]
         ? parseBullets(body)[0].split(/,\s*/).filter(Boolean)

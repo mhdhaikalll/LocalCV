@@ -74,6 +74,18 @@ export const ProjectSchema = z.object({
 });
 export type Project = z.infer<typeof ProjectSchema>;
 
+// ---- Extracurricular ----
+export const ExtracurricularSchema = z.object({
+  id: z.string(),
+  /** Organization, club, or programme name. */
+  organization: z.string(),
+  role: optionalText,
+  /** Single date or short range, e.g. "Mar 2024". */
+  date: optionalText,
+  bullets: z.array(z.string()).default([]),
+});
+export type Extracurricular = z.infer<typeof ExtracurricularSchema>;
+
 // ---- Skill Group ----
 export const SkillGroupSchema = z.object({
   id: z.string(),
@@ -110,6 +122,7 @@ export const SectionIdSchema = z.enum([
   "projects",
   "skills",
   "certifications",
+  "extracurriculars",
   "references",
   "languages",
   "interests",
@@ -123,10 +136,25 @@ export const DEFAULT_SECTION_ORDER: SectionId[] = [
   "projects",
   "skills",
   "certifications",
+  "extracurriculars",
   "references",
   "languages",
   "interests",
 ];
+
+/** Heading shown on the resume for each section. */
+export const SECTION_LABELS: Record<SectionId, string> = {
+  summary: "Summary",
+  experience: "Experience",
+  education: "Education",
+  projects: "Projects",
+  skills: "Skills",
+  certifications: "Certifications",
+  extracurriculars: "Extracurricular Activities",
+  references: "References",
+  languages: "Languages",
+  interests: "Interests",
+};
 
 // ---- ResumeDocument ----
 export const ResumeDocumentSchema = z.object({
@@ -138,6 +166,7 @@ export const ResumeDocumentSchema = z.object({
   projects: z.array(ProjectSchema).default([]),
   skills: z.array(SkillGroupSchema).default([]),
   certifications: z.array(CertificateSchema).default([]),
+  extracurriculars: z.array(ExtracurricularSchema).default([]),
   references: z.array(ReferenceSchema).max(2).default([]),
   languages: z.array(z.string()).default([]),
   interests: z.array(z.string()).default([]),
@@ -156,6 +185,7 @@ export function createEmptyDocument(): ResumeDocument {
     projects: [],
     skills: [],
     certifications: [],
+    extracurriculars: [],
     references: [],
     languages: [],
     interests: [],
@@ -167,6 +197,7 @@ export function createEmptyDocument(): ResumeDocument {
       projects: true,
       skills: true,
       certifications: true,
+      extracurriculars: true,
       references: true,
       languages: true,
       interests: true,

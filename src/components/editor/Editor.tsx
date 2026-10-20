@@ -49,6 +49,7 @@ import { SkillsForm } from "@/components/forms/SkillsForm";
 import { CertificationsForm } from "@/components/forms/CertificationsForm";
 import { ReferencesForm } from "@/components/forms/ReferencesForm";
 import { LanguagesForm, InterestsForm } from "@/components/forms/ListForms";
+import { ExtracurricularsForm } from "@/components/forms/ExtracurricularsForm";
 import type { SectionId } from "@/lib/schema";
 import { useTranslations } from "next-intl";
 
@@ -62,6 +63,7 @@ const SECTION_TABS: { id: SectionId; labelKey: string }[] = [
   { id: "projects", labelKey: "sections.projects" },
   { id: "skills", labelKey: "sections.skills" },
   { id: "certifications", labelKey: "sections.certifications" },
+  { id: "extracurriculars", labelKey: "sections.extracurriculars" },
   { id: "references", labelKey: "sections.references" },
   { id: "languages", labelKey: "sections.languages" },
   { id: "interests", labelKey: "sections.interests" },
@@ -81,6 +83,8 @@ function SectionForms({ section }: { section: SectionId }) {
       return <SkillsForm />;
     case "certifications":
       return <CertificationsForm />;
+    case "extracurriculars":
+      return <ExtracurricularsForm />;
     case "references":
       return <ReferencesForm />;
     case "languages":

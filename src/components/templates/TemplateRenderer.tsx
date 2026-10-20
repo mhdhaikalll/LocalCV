@@ -9,6 +9,7 @@ import {
 } from "@/lib/templates/style-context";
 import { PAGE_SIZES } from "@/lib/templates/style-context";
 import type { ResumeDocument, ResumeSettings, SectionId } from "@/lib/schema";
+import { SECTION_LABELS } from "@/lib/schema";
 
 interface TemplateRendererProps {
   document: ResumeDocument;
@@ -245,6 +246,52 @@ export function TemplateRenderer({
       </div>
     ) : null;
 
+  const renderExtracurriculars = () =>
+    order.includes("extracurriculars") && isSectionVisible(doc, "extracurriculars") ? (
+      <div style={{ display: "flex", flexDirection: "column", gap: s.entryGap }}>
+        {doc.extracurriculars.map((e) => (
+          <div
+            key={e.id}
+            className="resume-entry"
+            style={
+              layout === "timeline"
+                ? {
+                    position: "relative",
+                    paddingLeft: "14pt",
+                    borderLeft: `1.5pt solid ${settings.accentColor}`,
+                  }
+                : undefined
+            }
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                gap: "8pt",
+              }}
+            >
+              <p style={{ margin: 0 }}>
+                <span style={s.entryTitleStyle}>{e.organization}</span>
+                {e.role ? (
+                  <span style={s.entryMetaStyle}>
+                    {" — "}
+                    {e.role}
+                  </span>
+                ) : null}
+              </p>
+              {e.date ? (
+                <span style={{ ...s.entryMetaStyle, fontWeight: 600, whiteSpace: "nowrap" }}>
+                  {e.date}
+                </span>
+              ) : null}
+            </div>
+            {bullets(e.bullets, s.listStyle)}
+          </div>
+        ))}
+      </div>
+    ) : null;
+
   const renderLanguages = () =>
     order.includes("languages") && isSectionVisible(doc, "languages") ? (
       <p style={{ margin: 0 }}>{doc.languages.join(", ")}</p>
@@ -287,6 +334,7 @@ export function TemplateRenderer({
     projects: renderProjects,
     skills: renderSkills,
     certifications: renderCertifications,
+    extracurriculars: renderExtracurriculars,
     references: renderReferences,
     languages: renderLanguages,
     interests: renderInterests,
@@ -297,8 +345,7 @@ export function TemplateRenderer({
       {sections.map((section) => (
         <section key={section} style={{ marginBottom: s.blockGap }}>
           {section !== "summary" ? (
-            <SectionTag style={s.sectionTitleStyle}>              {section.charAt(0).toUpperCase() + section.slice(1)}
-            </SectionTag>
+            <SectionTag style={s.sectionTitleStyle}>{SECTION_LABELS[section]}</SectionTag>
           ) : null}
           {sectionRenderers[section]?.() ?? null}
         </section>
@@ -391,8 +438,7 @@ export function TemplateRenderer({
               }
               return (
                 <div key={section} style={{ marginBottom: s.blockGap }}>
-                  <SectionTag style={s.sectionTitleStyle}>                    {section.charAt(0).toUpperCase() + section.slice(1)}
-                  </SectionTag>
+                  <SectionTag style={s.sectionTitleStyle}>{SECTION_LABELS[section]}</SectionTag>
                   {render()}
                 </div>
               );
@@ -404,7 +450,7 @@ export function TemplateRenderer({
               paddingLeft: "18pt",
             }}
           >
-            {(["summary", "experience", "projects", "references"] as SectionId[]).map((section) => {
+            {(["summary", "experience", "projects", "extracurriculars", "references"] as SectionId[]).map((section) => {
               const render = sectionRenderers[section];
               if (!render || !order.includes(section) || !isSectionVisible(doc, section)) {
                 return null;
@@ -412,8 +458,7 @@ export function TemplateRenderer({
               return (
                 <div key={section} style={{ marginBottom: s.blockGap }}>
                   {section !== "summary" ? (
-                    <SectionTag style={s.sectionTitleStyle}>                      {section.charAt(0).toUpperCase() + section.slice(1)}
-                    </SectionTag>
+                    <SectionTag style={s.sectionTitleStyle}>{SECTION_LABELS[section]}</SectionTag>
                   ) : null}
                   {render()}
                 </div>
