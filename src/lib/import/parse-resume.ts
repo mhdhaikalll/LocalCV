@@ -30,6 +30,21 @@ const SECTION_HEADERS: Record<string, string> = {
   "volunteer experience": "extracurriculars",
   "volunteering": "extracurriculars",
   "community involvement": "extracurriculars",
+  awards: "additional",
+  "awards and honors": "additional",
+  "honors and awards": "additional",
+  honours: "additional",
+  publications: "additional",
+  "selected publications": "additional",
+  research: "additional",
+  "research experience": "additional",
+  coursework: "additional",
+  "relevant coursework": "additional",
+  memberships: "additional",
+  affiliations: "additional",
+  "professional affiliations": "additional",
+  speaking: "additional",
+  "conference talks": "additional",
   languages: "languages",
   interests: "interests",
   hobbies: "interests",
@@ -94,15 +109,15 @@ function normalize(text: string): string {
 }
 
 /** Heuristic section splitting (09-import-parsing.md). */
-function splitSections(text: string): { header: string; body: string[] }[] {
+function splitSections(text: string): { header: string; rawHeader?: string; body: string[] }[] {
   const lines = text.split("\n").map((l) => l.trim());
-  const sections: { header: string; body: string[] }[] = [
+  const sections: { header: string; rawHeader?: string; body: string[] }[] = [
     { header: "__contact__", body: [] },
   ];
   for (const line of lines) {
     const matched = SECTION_HEADERS[line.toLowerCase()];
     if (matched && line.length < 40) {
-      sections.push({ header: matched, body: [] });
+      sections.push({ header: matched, rawHeader: line, body: [] });
     } else {
       sections[sections.length - 1].body.push(line);
     }
@@ -285,6 +300,29 @@ export async function parseResumeFile(file: File): Promise<ParseResult> {
         });
       }
       items += doc.extracurriculars.length;
+    } else if (section.header === "additional") {
+      if (!doc.additional.entries.length && section.rawHeader) {
+        doc.additional.heading = section.rawHeader.trim().slice(0, 40);
+      }
+      for (const line of body) {
+        if (/^[-•●▪◦·]/.test(line) && doc.additional.entries.length) {
+          doc.additional.entries[doc.additional.entries.length - 1].bullets.push(
+            line.replace(/^[-•●▪◦·]\s*/, "").trim(),
+          );
+          continue;
+        }
+        const dateMatch = line.match(DATE_RE);
+        const withoutDate = dateMatch ? line.replace(dateMatch[0], "").trim() : line;
+        const [title, ...rest] = withoutDate.split(/\s+(?:—|–|-)\s+|\s*\|\s*/);
+        doc.additional.entries.push({
+          id: uuid(),
+          title: title?.trim() || withoutDate,
+          subtitle: rest.join(" - ").trim() || undefined,
+          date: dateMatch?.[0].trim(),
+          bullets: [],
+        });
+      }
+      items += doc.additional.entries.length;
     } else if (section.header === "languages") {
       doc.languages = parseBullets(body)[0]
         ? parseBullets(body)[0].split(/,\s*/).filter(Boolean)

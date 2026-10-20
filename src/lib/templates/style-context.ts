@@ -155,6 +155,14 @@ export function isSectionEmpty(doc: ResumeDocument, section: string): boolean {
       return !doc.extracurriculars.some(
         (e) => e.organization.trim() !== "" || e.role?.trim() || e.bullets.some((b) => b.trim()),
       );
+    case "additional":
+      return !doc.additional.entries.some(
+        (e) =>
+          e.title.trim() !== "" ||
+          e.subtitle?.trim() ||
+          e.date?.trim() ||
+          e.bullets.some((b) => b.trim()),
+      );
     case "references":
       return doc.references.length === 0;
     case "languages":

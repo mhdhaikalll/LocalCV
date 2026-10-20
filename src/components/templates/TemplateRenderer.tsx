@@ -9,7 +9,7 @@ import {
 } from "@/lib/templates/style-context";
 import { PAGE_SIZES } from "@/lib/templates/style-context";
 import type { ResumeDocument, ResumeSettings, SectionId } from "@/lib/schema";
-import { SECTION_LABELS } from "@/lib/schema";
+import { getSectionLabel } from "@/lib/schema";
 
 interface TemplateRendererProps {
   document: ResumeDocument;
@@ -322,6 +322,35 @@ export function TemplateRenderer({
       </div>
     ) : null;
 
+  const renderAdditional = () =>
+    order.includes("additional") && isSectionVisible(doc, "additional") ? (
+      <div style={{ display: "flex", flexDirection: "column", gap: s.entryGap }}>
+        {doc.additional.entries.map((e) => (
+          <div key={e.id} className="resume-entry">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                gap: "8pt",
+              }}
+            >
+              <div>
+                <EntryTag style={s.entryTitleStyle}>{e.title}</EntryTag>
+                {e.subtitle ? <p style={{ margin: 0 }}>{e.subtitle}</p> : null}
+              </div>
+              {e.date ? (
+                <span style={{ ...s.entryMetaStyle, fontWeight: 600, whiteSpace: "nowrap" }}>
+                  {e.date}
+                </span>
+              ) : null}
+            </div>
+            {bullets(e.bullets, s.listStyle)}
+          </div>
+        ))}
+      </div>
+    ) : null;
+
   const renderInterests = () =>
     order.includes("interests") && isSectionVisible(doc, "interests") ? (
       <p style={{ margin: 0 }}>{doc.interests.join(", ")}</p>
@@ -335,6 +364,7 @@ export function TemplateRenderer({
     skills: renderSkills,
     certifications: renderCertifications,
     extracurriculars: renderExtracurriculars,
+    additional: renderAdditional,
     references: renderReferences,
     languages: renderLanguages,
     interests: renderInterests,
@@ -345,7 +375,7 @@ export function TemplateRenderer({
       {sections.map((section) => (
         <section key={section} style={{ marginBottom: s.blockGap }}>
           {section !== "summary" ? (
-            <SectionTag style={s.sectionTitleStyle}>{SECTION_LABELS[section]}</SectionTag>
+            <SectionTag style={s.sectionTitleStyle}>{getSectionLabel(doc, section)}</SectionTag>
           ) : null}
           {sectionRenderers[section]?.() ?? null}
         </section>
@@ -438,7 +468,7 @@ export function TemplateRenderer({
               }
               return (
                 <div key={section} style={{ marginBottom: s.blockGap }}>
-                  <SectionTag style={s.sectionTitleStyle}>{SECTION_LABELS[section]}</SectionTag>
+                  <SectionTag style={s.sectionTitleStyle}>{getSectionLabel(doc, section)}</SectionTag>
                   {render()}
                 </div>
               );
@@ -450,7 +480,7 @@ export function TemplateRenderer({
               paddingLeft: "18pt",
             }}
           >
-            {(["summary", "experience", "projects", "extracurriculars", "references"] as SectionId[]).map((section) => {
+            {(["summary", "experience", "projects", "extracurriculars", "additional", "references"] as SectionId[]).map((section) => {
               const render = sectionRenderers[section];
               if (!render || !order.includes(section) || !isSectionVisible(doc, section)) {
                 return null;
@@ -458,7 +488,9 @@ export function TemplateRenderer({
               return (
                 <div key={section} style={{ marginBottom: s.blockGap }}>
                   {section !== "summary" ? (
-                    <SectionTag style={s.sectionTitleStyle}>{SECTION_LABELS[section]}</SectionTag>
+                    <SectionTag style={s.sectionTitleStyle}>
+                      {getSectionLabel(doc, section)}
+                    </SectionTag>
                   ) : null}
                   {render()}
                 </div>

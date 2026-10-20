@@ -50,6 +50,7 @@ import { CertificationsForm } from "@/components/forms/CertificationsForm";
 import { ReferencesForm } from "@/components/forms/ReferencesForm";
 import { LanguagesForm, InterestsForm } from "@/components/forms/ListForms";
 import { ExtracurricularsForm } from "@/components/forms/ExtracurricularsForm";
+import { AdditionalForm } from "@/components/forms/AdditionalForm";
 import type { SectionId } from "@/lib/schema";
 import { useTranslations } from "next-intl";
 
@@ -64,6 +65,7 @@ const SECTION_TABS: { id: SectionId; labelKey: string }[] = [
   { id: "skills", labelKey: "sections.skills" },
   { id: "certifications", labelKey: "sections.certifications" },
   { id: "extracurriculars", labelKey: "sections.extracurriculars" },
+  { id: "additional", labelKey: "sections.additional" },
   { id: "references", labelKey: "sections.references" },
   { id: "languages", labelKey: "sections.languages" },
   { id: "interests", labelKey: "sections.interests" },
@@ -85,6 +87,8 @@ function SectionForms({ section }: { section: SectionId }) {
       return <CertificationsForm />;
     case "extracurriculars":
       return <ExtracurricularsForm />;
+    case "additional":
+      return <AdditionalForm />;
     case "references":
       return <ReferencesForm />;
     case "languages":
@@ -206,6 +210,12 @@ export function Editor() {
   const openPanel = useCallback((p: Panel) => {
     setPanel((current) => (current === p ? "none" : p));
   }, []);
+
+  /** The additional section's tab uses its user-chosen heading. */
+  const tabLabel = (tab: { id: SectionId; labelKey: string }) =>
+    tab.id === "additional"
+      ? document.additional.heading.trim() || t(tab.labelKey)
+      : t(tab.labelKey);
 
   const isEmpty = !document.contact.name.trim() && !document.summary.trim();
 
@@ -446,8 +456,8 @@ export function Editor() {
                 </Accordion.Item>
                 {SECTION_TABS.map((tab) => (
                   <Accordion.Item key={tab.id} value={tab.id}>
-                    <Accordion.Control aria-label={`${t(tab.labelKey)} section`}>
-                      {t(tab.labelKey)}
+                    <Accordion.Control aria-label={`${tabLabel(tab)} section`}>
+                      {tabLabel(tab)}
                     </Accordion.Control>
                     <Accordion.Panel>
                       <SectionForms section={tab.id} />

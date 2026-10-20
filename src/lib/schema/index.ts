@@ -2,6 +2,7 @@ import {
   ResumeDocumentSchema as ResumeDocumentSchema_impl,
   createEmptyDocument as createEmptyDocument_impl,
   DEFAULT_SECTION_ORDER as DEFAULT_SECTION_ORDER_impl,
+  DEFAULT_ADDITIONAL_HEADING as DEFAULT_ADDITIONAL_HEADING_impl,
 } from "./resume";
 import type {
   ResumeDocument as ResumeDocument_impl,
@@ -16,6 +17,10 @@ export {
   EducationSchema,
   ProjectSchema,
   ExtracurricularSchema,
+  AdditionalEntrySchema,
+  AdditionalSectionSchema,
+  ADDITIONAL_HEADINGS,
+  DEFAULT_ADDITIONAL_HEADING,
   SkillGroupSchema,
   CertificateSchema,
   ReferenceSchema,
@@ -23,6 +28,7 @@ export {
   ResumeDocumentSchema,
   DEFAULT_SECTION_ORDER,
   SECTION_LABELS,
+  getSectionLabel,
   createEmptyDocument,
 } from "./resume";
 export type {
@@ -31,6 +37,8 @@ export type {
   Education,
   Project,
   Extracurricular,
+  AdditionalEntry,
+  AdditionalSection,
   SkillGroup,
   Certificate,
   Reference,
@@ -222,8 +230,27 @@ function sanitizeReference(value: unknown) {
   };
 }
 
-function sanitizeSectionOrder(value: unknown): SectionId_impl[] {
-  const requested = list(value).filter((section): section is SectionId_impl =>
+function sanitizeAdditionalEntry(value: unknown) {
+  const e = record(value);
+  return {
+    id: id(e.id),
+    title: plainText(e.title),
+    subtitle: text(e.subtitle),
+    date: text(e.date),
+    bullets: strings(e.bullets),
+  };
+}
+
+function sanitizeAdditional(value: unknown) {
+  const a = record(value);
+  const heading = text(a.heading);
+  return {
+    heading: heading ? heading.slice(0, 40) : DEFAULT_ADDITIONAL_HEADING_impl,
+    entries: list(a.entries).map(sanitizeAdditionalEntry),
+  };
+}
+
+function sanitizeSectionOrder(value: unknown): SectionId_impl[] {  const requested = list(value).filter((section): section is SectionId_impl =>
     SECTION_IDS.includes(section as SectionId_impl),
   );
   const unique = Array.from(new Set(requested));
@@ -268,6 +295,7 @@ export function sanitizeDocument(input: unknown): ResumeDocument_impl {
     skills: list(raw.skills).map(sanitizeSkillGroup),
     certifications: list(raw.certifications).map(sanitizeCertificate),
     extracurriculars: list(raw.extracurriculars).map(sanitizeExtracurricular),
+    additional: sanitizeAdditional(raw.additional),
     references: list(raw.references).map(sanitizeReference).slice(0, 2),
     languages: strings(raw.languages),
     interests: strings(raw.interests),

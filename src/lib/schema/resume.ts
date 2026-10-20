@@ -114,6 +114,34 @@ export const ReferenceSchema = z.object({
 });
 export type Reference = z.infer<typeof ReferenceSchema>;
 
+// ---- Additional (user-titled) section ----
+export const AdditionalEntrySchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  subtitle: optionalText,
+  date: optionalText,
+  bullets: z.array(z.string()).default([]),
+});
+export type AdditionalEntry = z.infer<typeof AdditionalEntrySchema>;
+
+export const ADDITIONAL_HEADINGS = [
+  "Awards",
+  "Publications",
+  "Research",
+  "Coursework",
+  "Memberships",
+  "Speaking",
+  "Volunteer Work",
+] as const;
+
+export const DEFAULT_ADDITIONAL_HEADING = "Additional Information";
+
+export const AdditionalSectionSchema = z.object({
+  heading: z.string().default(DEFAULT_ADDITIONAL_HEADING),
+  entries: z.array(AdditionalEntrySchema).default([]),
+});
+export type AdditionalSection = z.infer<typeof AdditionalSectionSchema>;
+
 // ---- Section visibility / order ----
 export const SectionIdSchema = z.enum([
   "summary",
@@ -123,6 +151,7 @@ export const SectionIdSchema = z.enum([
   "skills",
   "certifications",
   "extracurriculars",
+  "additional",
   "references",
   "languages",
   "interests",
@@ -137,6 +166,7 @@ export const DEFAULT_SECTION_ORDER: SectionId[] = [
   "skills",
   "certifications",
   "extracurriculars",
+  "additional",
   "references",
   "languages",
   "interests",
@@ -151,10 +181,22 @@ export const SECTION_LABELS: Record<SectionId, string> = {
   skills: "Skills",
   certifications: "Certifications",
   extracurriculars: "Extracurricular Activities",
+  additional: DEFAULT_ADDITIONAL_HEADING,
   references: "References",
   languages: "Languages",
   interests: "Interests",
 };
+
+/**
+ * Sections with a user-editable heading fall back to the stored heading so the
+ * resume, section-order UI, and editor tab all agree.
+ */
+export function getSectionLabel(doc: ResumeDocument, section: SectionId): string {
+  if (section === "additional") {
+    return doc.additional.heading.trim() || SECTION_LABELS.additional;
+  }
+  return SECTION_LABELS[section];
+}
 
 // ---- ResumeDocument ----
 export const ResumeDocumentSchema = z.object({
@@ -167,6 +209,7 @@ export const ResumeDocumentSchema = z.object({
   skills: z.array(SkillGroupSchema).default([]),
   certifications: z.array(CertificateSchema).default([]),
   extracurriculars: z.array(ExtracurricularSchema).default([]),
+  additional: AdditionalSectionSchema.default({ heading: DEFAULT_ADDITIONAL_HEADING, entries: [] }),
   references: z.array(ReferenceSchema).max(2).default([]),
   languages: z.array(z.string()).default([]),
   interests: z.array(z.string()).default([]),
@@ -186,6 +229,7 @@ export function createEmptyDocument(): ResumeDocument {
     skills: [],
     certifications: [],
     extracurriculars: [],
+    additional: { heading: DEFAULT_ADDITIONAL_HEADING, entries: [] },
     references: [],
     languages: [],
     interests: [],
@@ -198,6 +242,7 @@ export function createEmptyDocument(): ResumeDocument {
       skills: true,
       certifications: true,
       extracurriculars: true,
+      additional: true,
       references: true,
       languages: true,
       interests: true,
