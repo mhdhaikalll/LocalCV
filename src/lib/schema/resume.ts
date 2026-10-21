@@ -57,6 +57,8 @@ export const EducationSchema = z.object({
   school: z.string(),
   degree: z.string().optional(),
   field: z.string().optional(),
+  /** Optional grade, e.g. "3.8/4.0" or "First Class". */
+  cgpa: optionalText,
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   isCurrent: z.boolean().default(false),

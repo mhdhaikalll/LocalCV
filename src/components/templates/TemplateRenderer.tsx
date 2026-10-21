@@ -183,13 +183,27 @@ export function TemplateRenderer({
       <div style={{ display: "flex", flexDirection: "column", gap: s.entryGap }}>
         {doc.education.map((e) => (
           <div key={e.id} className="resume-entry">
-            <EntryTag style={s.entryTitleStyle}>{e.school}</EntryTag>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                flexWrap: "wrap",
+                columnGap: "8pt",
+                rowGap: "1pt",
+              }}
+            >
+              <EntryTag style={s.entryTitleStyle}>{e.school}</EntryTag>
+              {(e.startDate || e.endDate || e.isCurrent) && (
+                <span style={{ ...s.entryMetaStyle, fontWeight: 600, whiteSpace: "nowrap" }}>
+                  {[e.startDate, e.isCurrent ? "Present" : e.endDate]
+                    .filter((v): v is string => typeof v === "string" && v.trim() !== "")
+                    .join(" – ")}
+                </span>
+              )}
+            </div>
             {e.degree ? <p style={{ margin: 0 }}>{e.degree}</p> : null}
-            <p style={s.entryMetaStyle}>
-              {[e.startDate, e.isCurrent ? "Present" : e.endDate]
-                .filter(Boolean)
-                .join(" – ")}
-            </p>
+            {e.cgpa ? <p style={s.entryMetaStyle}>CGPA: {e.cgpa}</p> : null}
             {bullets(e.bullets, s.listStyle)}
           </div>
         ))}

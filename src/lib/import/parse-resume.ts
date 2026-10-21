@@ -218,10 +218,14 @@ export async function parseResumeFile(file: File): Promise<ParseResult> {
             .map((p) => p.trim())
             .filter(Boolean)
             .join(", ");
+          const gpaMatch = line.match(
+            /(?:cgpa|gpa|grade)\s*[:–-]?\s*(\d+(?:\.\d+)?(?:\s*\/\s*\d+(?:\.\d+)?)?)/i,
+          );
           doc.education.push({
             id: uuid(),
             school: parts[0]?.trim() ?? line,
             degree: degree || undefined,
+            cgpa: gpaMatch?.[1]?.replace(/\s+/g, ""),
             startDate: line.match(DATE_RE)?.[0]?.split(/[-–]/)[0]?.trim(),
             endDate:
               line.match(DATE_RE)?.[0]?.split(/[-–]/)[1]?.trim() === "Present"

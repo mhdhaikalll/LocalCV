@@ -169,6 +169,7 @@ function sanitizeEducation(value: unknown) {
     school: plainText(e.school),
     degree: text(e.degree),
     field: text(e.field),
+    cgpa: text(e.cgpa),
     startDate: text(e.startDate),
     endDate: text(e.endDate),
     isCurrent: bool(e.isCurrent),

@@ -82,6 +82,12 @@ export function EducationForm() {
                 onChange={(e) => patch(i, { endDate: e.target.value })}
               />
             </SimpleGrid>
+            <TextInput
+              label="CGPA / grade (optional)"
+              placeholder="3.8/4.0"
+              value={item.cgpa ?? ""}
+              onChange={(e) => patch(i, { cgpa: e.target.value })}
+            />
             <Checkbox
               label="Currently studying here"
               checked={item.isCurrent}
