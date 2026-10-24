@@ -47,3 +47,5 @@ next-env.d.ts
 vuln.md
 
 validate-ssrf.mjs.tmp
+
+/skill

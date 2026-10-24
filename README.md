@@ -1,4 +1,4 @@
-# LocalCV
+# ResumeLah
 
 A **free, local-first, ATS-friendly resume builder** that runs in the browser. No account, no uploads, no paywall.
 

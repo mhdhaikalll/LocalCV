@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     url: `${SITE_URL}/resume`,
-    title: "Resume Editor · LocalCV",
+    title: "Resume Editor · ResumeLah",
     description:
       "Edit your resume with live preview, real-time ATS scoring, and 12 parser-safe templates.",
   },

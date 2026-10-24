@@ -14,14 +14,14 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 84,
+          fontSize: 70,
           fontWeight: 800,
           color: "#ffffff",
           fontFamily: "system-ui, sans-serif",
           letterSpacing: "-0.04em",
         }}
       >
-        CV
+        RL
       </div>
     ),
     { ...size },

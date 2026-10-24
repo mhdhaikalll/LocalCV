@@ -36,7 +36,7 @@ export default function Image() {
               color: "#2b6469",
             }}
           >
-            CV
+            RL
           </div>
           <div style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-0.02em" }}>
             {SITE.name}

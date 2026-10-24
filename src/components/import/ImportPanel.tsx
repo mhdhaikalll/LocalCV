@@ -88,7 +88,7 @@ export function ImportPanel() {
             <Stack gap={4} align="center">
               <IconUpload size={28} color="var(--mantine-color-dimmed)" />
               <Text size="sm" c="dimmed" ta="center">
-                Drop a PDF, DOCX, or LocalCV JSON file here
+                Drop a PDF, DOCX, or ResumeLah JSON file here
               </Text>
               <Text size="xs" c="dimmed">
                 or click to browse

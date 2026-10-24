@@ -133,7 +133,7 @@ export function LandingPage() {
             <Group gap={10} wrap="nowrap">
               <span className="landing-mark" aria-hidden />
               <Text fw={700} size="lg" className="landing-wordmark">
-                LocalCV
+                ResumeLah
               </Text>
             </Group>
 
@@ -345,11 +345,11 @@ export function LandingPage() {
           <Container size="lg" py={{ base: 40, md: 56 }}>
             <SimpleGrid cols={{ base: 1, md: 2 }} spacing={{ base: 24, md: 64 }}>
               <Title order={2} className="landing-h3">
-                What is LocalCV?
+                What is ResumeLah?
               </Title>
               <Stack gap="md">
                 <Text size="sm" c="dimmed">
-                  LocalCV is a free resume builder that runs in your browser. It uses twelve
+                  ResumeLah is a free resume builder that runs in your browser. It uses twelve
                   parser-safe templates, scores your resume against a fixed set of ATS
                   checks, and exports a PDF with selectable text. There is no account, no
                   subscription, and no upload; your resume is stored in local storage on the
@@ -639,7 +639,7 @@ export function LandingPage() {
                 Your resume stays where you wrote it.
               </Title>
               <Text c="dimmed">
-                LocalCV is a static front end with no database for resume content. There is
+                ResumeLah is a static front end with no database for resume content. There is
                 no account system to leak and no file storage to breach.
               </Text>
             </Stack>
@@ -741,7 +741,7 @@ export function LandingPage() {
             <Stack gap={8}>
               <Group gap={8}>
                 <span className="landing-mark" aria-hidden />
-                <Text fw={700}>LocalCV</Text>
+                <Text fw={700}>ResumeLah</Text>
               </Group>
               <Text size="sm" c="dimmed" maw={280}>
                 A local-first resume builder. Open source, no account, no uploads.
