@@ -32,8 +32,13 @@ import {
 import { useResumeStore } from "@/lib/store/resume-store";
 import { useAiEnabled } from "@/lib/ai/use-ai-enabled";
 import { EditorTour } from "./EditorTour";
+import { PageFitBadge } from "./PageFitBadge";
+import { PreviewMeasurementProvider, usePreviewMeasurement } from "./preview-measurement";
 import { useUndoRedoShortcuts } from "@/lib/store/use-undo-redo";
 import { computeAtsScore } from "@/lib/ats/scoring";
+import { measurePageUnits, measureResumeContentHeight } from "@/lib/layout/measure";
+import { PAGE_HEIGHT_PX } from "@/lib/layout/page-fit";
+import { usePrintPageStyle } from "@/lib/export/print-page-style";
 import { exportJson } from "@/lib/export/json";
 import { ResumePreview } from "@/components/templates";
 import { TemplatePanel } from "@/components/templates/TemplatePanel";
@@ -122,11 +127,41 @@ function ScoreBadge({ onClick }: { onClick: () => void }) {
   );
 }
 
+/**
+ * The preview document, re-rendered with the planner's page decisions so the
+ * preview shows real pages and the printed output breaks in the same places.
+ * Mounted inside the measurement provider, which is where those decisions live.
+ */
+function PreviewBreakDocument({
+  innerRef,
+}: {
+  innerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const document = useResumeStore((s) => s.document);
+  const settings = useResumeStore((s) => s.settings);
+  const { pageStarts } = usePreviewMeasurement();
+  const spacers = Object.fromEntries(
+    pageStarts.map((start) => [start.sectionId, start.spacerPx]),
+  );
+  const breaks = pageStarts.map((start) => start.sectionId);
+  return (
+    <ResumePreview
+      document={document}
+      settings={settings}
+      innerRef={innerRef}
+      pageBreaks={breaks}
+      pageSpacers={spacers}
+    />
+  );
+}
+
 function PreviewScaler({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-  const [contentHeight, setContentHeight] = useState(1056);
+  const { contentHeight, setContentHeight, scale, setScale, setUnits, pages } =
+    usePreviewMeasurement();
+  const settings = useResumeStore((s) => s.settings);
+  const pageHeightPx = PAGE_HEIGHT_PX[settings.pageSize] ?? PAGE_HEIGHT_PX.Letter;
 
   useEffect(() => {
     const container = ref.current;
@@ -134,15 +169,21 @@ function PreviewScaler({ children }: { children: React.ReactNode }) {
     if (!container || !content) return;
     const update = () => {
       const width = container.clientWidth - 16; // account for padding
-      setScale(Math.min(1, width / 816));
-      setContentHeight(content.offsetHeight);
+      const nextScale = Math.min(1, width / 816);
+      setScale(nextScale);
+      const root = content.firstElementChild as HTMLElement | null;
+      if (!root) return;
+      setContentHeight(measureResumeContentHeight(root));
+      setUnits(measurePageUnits(root, nextScale));
     };
     const observer = new ResizeObserver(update);
     observer.observe(container);
     observer.observe(content);
     update();
     return () => observer.disconnect();
-  }, []);
+  }, [setContentHeight, setScale, setUnits]);
+
+  const sheetHeight = Math.max(contentHeight, pages * pageHeightPx);
 
   return (
     <Box
@@ -151,7 +192,7 @@ function PreviewScaler({ children }: { children: React.ReactNode }) {
       w="100%"
       style={{
         overflow: "auto",
-        background: "var(--mantine-color-gray-2)",
+        background: "var(--mantine-color-gray-3)",
         padding: 8,
       }}
     >
@@ -159,7 +200,7 @@ function PreviewScaler({ children }: { children: React.ReactNode }) {
         style={{
           margin: "0 auto",
           width: Math.ceil(816 * scale),
-          height: Math.ceil(contentHeight * scale),
+          height: Math.ceil(sheetHeight * scale),
           position: "relative",
         }}
       >
@@ -176,6 +217,42 @@ function PreviewScaler({ children }: { children: React.ReactNode }) {
           }}
         >
           {children}
+          {/* Draw each sheet edge, so the gap between pages is visible even
+              inside one continuous flow. */}
+          {Array.from({ length: Math.max(0, pages - 1) }, (_, index) => {
+            const top = (index + 1) * pageHeightPx;
+            return (
+              <div
+                key={top}
+                className="page-sheet-edge"
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  top,
+                  height: 8,
+                  background: "var(--mantine-color-gray-2)",
+                  borderTop: "1px solid #c9d3d6",
+                  borderBottom: "1px solid #c9d3d6",
+                }}
+              >
+                <span
+                  style={{
+                    position: "absolute",
+                    right: 8,
+                    top: -14,
+                    fontSize: 9,
+                    lineHeight: "12px",
+                    color: "#8b979c",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  PAGE {index + 2}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </Box>
@@ -195,12 +272,37 @@ export function Editor() {
 
   const [panel, setPanel] = useState<Panel>("none");
   const [mobileTab, setMobileTab] = useState<MobileTab>("form");
+  const [openSection, setOpenSection] = useState<string | null>("contact");
   const hydrated = useResumeStore((s) => s.hydrated);
   const isMobile = useMediaQuery("(max-width: 48em)");
 
   useUndoRedoShortcuts();
 
+  // Accordion controls are keyed by section id so a jump can open and focus one.
+  const accordionRefs = useRef(new Map<string, HTMLElement>());
+
+  const jumpToSection = useCallback(
+    (id: SectionId) => {
+      setOpenSection(id);
+      setPanel("none");
+      if (isMobile) setMobileTab("form");
+
+      // Wait for the drawer to close and the panel to expand before scrolling,
+      // otherwise the measured position is wrong and the focus target is hidden.
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          const control = accordionRefs.current.get(id);
+          if (!control) return;
+          control.scrollIntoView({ behavior: "smooth", block: "center" });
+          control.focus({ preventScroll: true });
+        });
+      });
+    },
+    [isMobile],
+  );
+
   const printRef = useRef<HTMLDivElement>(null);
+  usePrintPageStyle(settings);
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle:
@@ -231,13 +333,14 @@ export function Editor() {
   };
 
   return (
-    <AppShell
-      header={{ height: 48 }}
-      padding={0}
-      styles={{
-        main: { height: "100dvh", display: "flex", flexDirection: "column" },
-      }}
-    >
+    <PreviewMeasurementProvider>
+      <AppShell
+        header={{ height: 48 }}
+        padding={0}
+        styles={{
+          main: { height: "100dvh", display: "flex", flexDirection: "column" },
+        }}
+      >
       <AppShell.Header data-tour="header">
         <Group h="100%" px="sm" justify="space-between" wrap="nowrap" gap="xs">
           <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
@@ -328,6 +431,9 @@ export function Editor() {
           ) : (
             <Group gap="xs" wrap="nowrap">
               <ScoreBadge onClick={() => openPanel("ats")} />
+              <Box visibleFrom="lg">
+                <PageFitBadge />
+              </Box>
               <Button
                 variant="default"
                 size="compact-sm"
@@ -438,7 +544,8 @@ export function Editor() {
           >
             <ScrollArea style={{ flex: 1 }} px="sm" py="xs">
               <Accordion
-                defaultValue="contact"
+                value={openSection}
+                onChange={setOpenSection}
                 variant="separated"
                 radius="md"
                 styles={{
@@ -447,7 +554,13 @@ export function Editor() {
                 }}
               >
                 <Accordion.Item value="contact">
-                  <Accordion.Control aria-label="Contact section">
+                  <Accordion.Control
+                    aria-label="Contact section"
+                    ref={(element) => {
+                      if (element) accordionRefs.current.set("contact", element);
+                      else accordionRefs.current.delete("contact");
+                    }}
+                  >
                     Contact
                   </Accordion.Control>
                   <Accordion.Panel>
@@ -456,7 +569,13 @@ export function Editor() {
                 </Accordion.Item>
                 {SECTION_TABS.map((tab) => (
                   <Accordion.Item key={tab.id} value={tab.id}>
-                    <Accordion.Control aria-label={`${tabLabel(tab)} section`}>
+                    <Accordion.Control
+                      aria-label={`${tabLabel(tab)} section`}
+                      ref={(element) => {
+                        if (element) accordionRefs.current.set(tab.id, element);
+                        else accordionRefs.current.delete(tab.id);
+                      }}
+                    >
                       {tabLabel(tab)}
                     </Accordion.Control>
                     <Accordion.Panel>
@@ -477,7 +596,7 @@ export function Editor() {
             aria-label="Live resume preview"
           >
             <PreviewScaler>
-              <ResumePreview document={document} settings={settings} innerRef={printRef} />
+              <PreviewBreakDocument innerRef={printRef} />
             </PreviewScaler>
           </Box>
         </Group>
@@ -501,7 +620,7 @@ export function Editor() {
           size={isMobile ? "100%" : "md"}
           padding="md"
         >
-          <AtsPanel />
+          <AtsPanel onJumpToSection={jumpToSection} />
         </Drawer>
         <Drawer
           opened={panel === "ai"}
@@ -529,7 +648,8 @@ export function Editor() {
           isMobile={isMobile}
           onBeforeStart={() => setMobileTab("form")}
         />
-      </AppShell.Main>
-    </AppShell>
+        </AppShell.Main>
+      </AppShell>
+    </PreviewMeasurementProvider>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode, Ref } from "react";
+import { Fragment, type CSSProperties, type ReactNode, type Ref } from "react";
 import {
   buildStyleContext,
   isSectionVisible,
@@ -22,6 +22,13 @@ interface TemplateRendererProps {
    * (e.g. the landing page sample), so the page keeps a single real <h1>.
    */
   decorative?: boolean;
+  /**
+   * Section ids that must start a new printed page, from the break planner in
+   * `lib/layout/paginate.ts`. The preview draws the same boundaries.
+   */
+  pageBreaks?: string[];
+  /** Whitespace in px inserted before a section so it starts a new page. */
+  pageSpacers?: Record<string, number>;
   children?: ReactNode;
 }
 
@@ -107,6 +114,8 @@ export function TemplateRenderer({
   variant = "default",
   layout = "single",
   decorative = false,
+  pageBreaks,
+  pageSpacers,
   children,
 }: TemplateRendererProps) {
   const s = buildStyleContext(settings, variant);
@@ -118,7 +127,7 @@ export function TemplateRenderer({
 
   const renderSummary = () =>
     isSectionVisible(doc, "summary") ? (
-      <p style={{ margin: 0, textAlign: "justify" }}>{doc.summary}</p>
+      <p data-page-block="text" style={{ margin: 0, textAlign: "justify" }}>{doc.summary}</p>
     ) : null;
 
   const renderExperience = () =>
@@ -127,7 +136,7 @@ export function TemplateRenderer({
         {doc.experience.map((e) => (
           <div
             key={e.id}
-            className="resume-entry"
+            className="resume-entry" data-page-block="entry"
             style={
               layout === "timeline"
                 ? {
@@ -182,7 +191,7 @@ export function TemplateRenderer({
     order.includes("education") && isSectionVisible(doc, "education") ? (
       <div style={{ display: "flex", flexDirection: "column", gap: s.entryGap }}>
         {doc.education.map((e) => (
-          <div key={e.id} className="resume-entry">
+          <div key={e.id} className="resume-entry" data-page-block="entry">
             <div
               style={{
                 display: "flex",
@@ -214,7 +223,7 @@ export function TemplateRenderer({
     order.includes("projects") && isSectionVisible(doc, "projects") ? (
       <div style={{ display: "flex", flexDirection: "column", gap: s.entryGap }}>
         {doc.projects.map((p) => (
-          <div key={p.id} className="resume-entry">
+          <div key={p.id} className="resume-entry" data-page-block="entry">
             <EntryTag style={s.entryTitleStyle}>{p.name}</EntryTag>
             {p.description ? <p style={{ margin: 0 }}>{p.description}</p> : null}
             {p.link ? (
@@ -239,7 +248,7 @@ export function TemplateRenderer({
         {doc.skills
           .filter((g) => g.items.length)
           .map((g) => (
-            <p key={g.id} style={{ margin: 0 }}>
+            <p key={g.id} data-page-block="text" style={{ margin: 0 }}>
               <strong style={{ color: settings.primaryColor }}>{g.category}:</strong>{" "}
               {g.items.join(", ")}
             </p>
@@ -251,7 +260,7 @@ export function TemplateRenderer({
     order.includes("certifications") && isSectionVisible(doc, "certifications") ? (
       <div style={{ display: "flex", flexDirection: "column", gap: "2pt" }}>
         {doc.certifications.map((c) => (
-          <p key={c.id} style={{ margin: 0 }} className="resume-entry">
+          <p key={c.id} style={{ margin: 0 }} className="resume-entry" data-page-block="entry">
             <strong>{c.name}</strong>
             {c.issuer ? ` — ${c.issuer}` : ""}
             {c.date ? ` (${c.date})` : ""}
@@ -266,7 +275,7 @@ export function TemplateRenderer({
         {doc.extracurriculars.map((e) => (
           <div
             key={e.id}
-            className="resume-entry"
+            className="resume-entry" data-page-block="entry"
             style={
               layout === "timeline"
                 ? {
@@ -308,7 +317,7 @@ export function TemplateRenderer({
 
   const renderLanguages = () =>
     order.includes("languages") && isSectionVisible(doc, "languages") ? (
-      <p style={{ margin: 0 }}>{doc.languages.join(", ")}</p>
+      <p data-page-block="text" style={{ margin: 0 }}>{doc.languages.join(", ")}</p>
     ) : null;
 
   const renderReferences = () =>
@@ -322,7 +331,7 @@ export function TemplateRenderer({
         }}
       >
         {doc.references.map((r) => (
-          <div key={r.id} className="resume-entry">
+          <div key={r.id} className="resume-entry" data-page-block="entry">
             <EntryTag style={s.entryTitleStyle}>{r.name}</EntryTag>
             {r.role ? <p style={{ margin: 0 }}>{r.role}</p> : null}
             {r.company ? <p style={s.entryMetaStyle}>{r.company}</p> : null}
@@ -340,7 +349,7 @@ export function TemplateRenderer({
     order.includes("additional") && isSectionVisible(doc, "additional") ? (
       <div style={{ display: "flex", flexDirection: "column", gap: s.entryGap }}>
         {doc.additional.entries.map((e) => (
-          <div key={e.id} className="resume-entry">
+          <div key={e.id} className="resume-entry" data-page-block="entry">
             <div
               style={{
                 display: "flex",
@@ -367,7 +376,7 @@ export function TemplateRenderer({
 
   const renderInterests = () =>
     order.includes("interests") && isSectionVisible(doc, "interests") ? (
-      <p style={{ margin: 0 }}>{doc.interests.join(", ")}</p>
+      <p data-page-block="text" style={{ margin: 0 }}>{doc.interests.join(", ")}</p>
     ) : null;
 
   const sectionRenderers: Record<SectionId, () => ReactNode> = {
@@ -386,14 +395,36 @@ export function TemplateRenderer({
 
   const body = (
     <>
-      {sections.map((section) => (
-        <section key={section} style={{ marginBottom: s.blockGap }}>
-          {section !== "summary" ? (
-            <SectionTag style={s.sectionTitleStyle}>{getSectionLabel(doc, section)}</SectionTag>
-          ) : null}
-          {sectionRenderers[section]?.() ?? null}
-        </section>
-      ))}
+      {sections.map((section) => {
+        const spacer = pageSpacers?.[section];
+        return (
+          <Fragment key={section}>
+            {spacer ? (
+              // Completes the previous page and adds the next page's top margin,
+              // so this section starts exactly at that page's content top.
+              <div
+                aria-hidden
+                data-page-spacer={section}
+                style={{ height: `${spacer}px`, margin: 0, padding: 0 }}
+              />
+            ) : null}
+            <section
+              data-page-section={section}
+              data-page-break-before={
+                pageBreaks?.includes(section) ? "true" : undefined
+              }
+              style={{ marginBottom: s.blockGap }}
+            >
+              {section !== "summary" ? (
+                <SectionTag data-page-block="section-title" style={s.sectionTitleStyle}>
+                  {getSectionLabel(doc, section)}
+                </SectionTag>
+              ) : null}
+              {sectionRenderers[section]?.() ?? null}
+            </section>
+          </Fragment>
+        );
+      })}
       {children}
     </>
   );
@@ -411,6 +442,7 @@ export function TemplateRenderer({
 
   const header = (
     <header
+      data-page-block="header"
       style={
         photoSidebar
           ? {
@@ -482,7 +514,7 @@ export function TemplateRenderer({
               }
               return (
                 <div key={section} style={{ marginBottom: s.blockGap }}>
-                  <SectionTag style={s.sectionTitleStyle}>{getSectionLabel(doc, section)}</SectionTag>
+                  <SectionTag data-page-block="section-title" style={s.sectionTitleStyle}>{getSectionLabel(doc, section)}</SectionTag>
                   {render()}
                 </div>
               );
@@ -502,7 +534,7 @@ export function TemplateRenderer({
               return (
                 <div key={section} style={{ marginBottom: s.blockGap }}>
                   {section !== "summary" ? (
-                    <SectionTag style={s.sectionTitleStyle}>
+                    <SectionTag data-page-block="section-title" style={s.sectionTitleStyle}>
                       {getSectionLabel(doc, section)}
                     </SectionTag>
                   ) : null}

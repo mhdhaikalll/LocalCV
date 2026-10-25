@@ -6,19 +6,27 @@ import {
 } from "@/lib/schema";
 import { getTemplateDescriptor } from "@/lib/templates/registry";
 import { isSectionEmpty } from "@/lib/templates/style-context";
+import { extractTerms, normalizeTerm, stem } from "./keywords";
+import { canonicalize, canonicalizePhrase, hasVariant } from "./lexicon";
 
-const STOP_WORDS = new Set(
-  "a an the and or but if then else for to of in on at by with from as is are was were be been being will would can could should do does did have has had you your we our they their he she it its this that these those not no yes about into over under more most other some such only own same so than too very s t just don now i me my what which who whom when where why how all any both each few nor own too also per via etc across within".split(
-    " ",
-  ),
-);
+export { tokenize } from "./keywords";
+
+export interface AtsCheck {
+  label: string;
+  passed: boolean;
+  points: number;
+  /** One sentence: why this check exists. */
+  why: string;
+  /** Section the user should edit, when the failure is actionable. */
+  fixSection?: SectionId;
+}
 
 export interface AtsCategoryScore {
   id: string;
   label: string;
   score: number;
   max: number;
-  checks: { label: string; passed: boolean; points: number }[];
+  checks: AtsCheck[];
 }
 
 export interface AtsSuggestion {
@@ -33,12 +41,20 @@ export interface AtsResult {
   hasJobDescription: boolean;
 }
 
-function tokenize(text: string): string[] {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9+#.\s-]/g, " ")
-    .split(/\s+/)
-    .filter((t) => t.length > 1 && !STOP_WORDS.has(t));
+/**
+ * Comparison key for a term. Whole-phrase lexicon entries win ("machine
+ * learning" → machinelearning); otherwise each token is stemmed and mapped.
+ */
+function canonicalKey(term: string): string {
+  const normalized = normalizeTerm(term);
+  if (!normalized) return "";
+  const whole = canonicalizePhrase(normalized);
+  if (whole !== normalized) return whole;
+  return normalized
+    .split(" ")
+    .filter(Boolean)
+    .map((token) => canonicalize(stem(token)))
+    .join(" ");
 }
 
 export function resumeToText(doc: ResumeDocument): string {
@@ -86,6 +102,91 @@ export function resumeToText(doc: ResumeDocument): string {
   return parts.join("\n");
 }
 
+/** Every canonical form the resume can offer, phrases included. */
+function resumeCanonicalSet(doc: ResumeDocument): Set<string> {
+  const keys = new Set<string>();
+  for (const term of extractTerms(resumeToText(doc))) {
+    const key = canonicalKey(term);
+    if (key) keys.add(key);
+  }
+  return keys;
+}
+
+interface Keyword {
+  /** Form shown to the user: the job description's own wording. */
+  surface: string;
+  canonical: string;
+  weight: number;
+}
+
+const LEXICON_WEIGHT_BONUS = 2;
+const PHRASE_WEIGHT_BONUS = 2;
+const KEYWORD_LIMIT = 40;
+
+/** Locale-independent so ordering is deterministic on every machine. */
+function compareSurface(a: string, b: string): number {
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
+function countOccurrences(tokens: string[], phrase: string[]): number {
+  let count = 0;
+  for (let i = 0; i + phrase.length <= tokens.length; i++) {
+    if (phrase.every((part, offset) => tokens[i + offset] === part)) count++;
+  }
+  return count;
+}
+
+/** Ranked, de-duplicated job-description terms. */
+export function extractKeywords(jobDescription: string): Keyword[] {
+  const terms = extractTerms(jobDescription);
+  if (!terms.length) return [];
+
+  const tokens = normalizeTerm(jobDescription).split(" ").filter(Boolean);
+  const byCanonical = new Map<string, Keyword>();
+  /** Unigrams swallowed by a known multi-word skill ("machine learning"). */
+  const absorbed = new Set<string>();
+
+  const consider = (term: string) => {
+    const occurrences = countOccurrences(tokens, term.split(" "));
+    if (occurrences === 0) return;
+    const canonical = canonicalKey(term);
+    if (!canonical) return;
+
+    const weight =
+      occurrences +
+      (hasVariant(term) ? LEXICON_WEIGHT_BONUS : 0) +
+      (term.includes(" ") ? PHRASE_WEIGHT_BONUS : 0);
+
+    const existing = byCanonical.get(canonical);
+    if (
+      !existing ||
+      weight > existing.weight ||
+      (weight === existing.weight && compareSurface(term, existing.surface) < 0)
+    ) {
+      byCanonical.set(canonical, { surface: term, canonical, weight });
+    }
+  };
+
+  // Known multi-word skills are matched whole; bare n-grams are noise, because
+  // they mostly straddle clause boundaries ("design for", "team and").
+  for (const term of terms) {
+    if (!term.includes(" ") || !hasVariant(term)) continue;
+    consider(term);
+    for (const token of term.split(" ")) absorbed.add(token);
+  }
+
+  for (const term of terms) {
+    if (term.includes(" ")) continue;
+    if (absorbed.has(term)) continue;
+    consider(term);
+  }
+
+  return [...byCanonical.values()]
+    .sort((a, b) => b.weight - a.weight || compareSurface(a.surface, b.surface))
+    .slice(0, KEYWORD_LIMIT);
+}
+
 const SECTION_FOR_KEYWORD: { test: RegExp; section: SectionId }[] = [
   { test: /^(led|managed|built|designed|developed|delivered|improved|increased|reduced)/i, section: "experience" },
   { test: /(certif|certificate|pmp|cisa|cpa|license)/i, section: "certifications" },
@@ -123,17 +224,38 @@ export function computeAtsScore(
       return false;
     }
   })();
-  const contactChecks = [
-    { label: "Name present", passed: Boolean(doc.contact.name.trim()), points: 4 },
-    { label: "Email present & valid", passed: emailOk, points: 3 },
-    { label: "Phone present", passed: Boolean(doc.contact.phone?.trim()), points: 3 },
-    { label: "Location present", passed: Boolean(doc.contact.location?.trim()), points: 2 },
+  const contactChecks: AtsCheck[] = [
+    {
+      label: "Name present",
+      passed: Boolean(doc.contact.name.trim()),
+      points: 4,
+      why: "A parser needs a name to attach the document to a candidate record.",
+    },
+    {
+      label: "Email present & valid",
+      passed: emailOk,
+      points: 3,
+      why: "Email is how a recruiter replies, and a malformed address is silently unusable.",
+    },
+    {
+      label: "Phone present",
+      passed: Boolean(doc.contact.phone?.trim()),
+      points: 3,
+      why: "Many agencies still screen by phone, so a missing number removes a whole contact path.",
+    },
+    {
+      label: "Location present",
+      passed: Boolean(doc.contact.location?.trim()),
+      points: 2,
+      why: "Location drives work-authorisation and relocation questions before any interview.",
+    },
     {
       label: "LinkedIn, website, or GitHub",
       passed: Boolean(
         doc.contact.linkedin?.trim() || doc.contact.website?.trim() || doc.contact.github?.trim(),
       ),
       points: 3,
+      why: "One corroborating link lets a reviewer check your work beyond the resume.",
     },
   ];
   categories.push({
@@ -145,23 +267,51 @@ export function computeAtsScore(
   });
 
   // 2. Section completeness (weight 30)
-  const sectionPoints: { label: string; present: boolean; points: number }[] = [
-    { label: "Summary", present: !isSectionEmpty(doc, "summary"), points: 6 },
-    { label: "Experience", present: !isSectionEmpty(doc, "experience"), points: 8 },
-    { label: "Education", present: !isSectionEmpty(doc, "education"), points: 5 },
-    { label: "Skills", present: !isSectionEmpty(doc, "skills"), points: 5 },
+  const sectionPoints: AtsCheck[] = [
+    {
+      label: "Summary",
+      passed: !isSectionEmpty(doc, "summary"),
+      points: 6,
+      why: "A short summary tells a screener what role you are targeting before any detail.",
+      fixSection: "summary",
+    },
+    {
+      label: "Experience",
+      passed: !isSectionEmpty(doc, "experience"),
+      points: 8,
+      why: "Experience is what screening decisions mostly rest on, so an empty one is fatal.",
+      fixSection: "experience",
+    },
+    {
+      label: "Education",
+      passed: !isSectionEmpty(doc, "education"),
+      points: 5,
+      why: "Education answers the degree or institution filter many postings apply mechanically.",
+      fixSection: "education",
+    },
+    {
+      label: "Skills",
+      passed: !isSectionEmpty(doc, "skills"),
+      points: 5,
+      why: "A skills list is where keyword searches look first, even for career changers.",
+      fixSection: "skills",
+    },
     {
       label: "Projects or certifications",
-      present: !isSectionEmpty(doc, "projects") || !isSectionEmpty(doc, "certifications"),
+      passed: !isSectionEmpty(doc, "projects") || !isSectionEmpty(doc, "certifications"),
       points: 3,
+      why: "Projects and certifications carry a resume whose work history is still short.",
+      fixSection: "projects",
     },
     {
       label: "Languages or interests",
-      present: !isSectionEmpty(doc, "languages") || !isSectionEmpty(doc, "interests"),
+      passed: !isSectionEmpty(doc, "languages") || !isSectionEmpty(doc, "interests"),
       points: 3,
+      why: "Languages matter for cross-border roles, and interests give an interviewer a human opener.",
+      fixSection: "languages",
     },
   ];
-  const sectionScore = sectionPoints.filter((s) => s.present).reduce((a, s) => a + s.points, 0);
+  const sectionScore = sectionPoints.filter((s) => s.passed).reduce((a, s) => a + s.points, 0);
 
   const hasJd = jobDescription.trim().length > 0;
 
@@ -169,21 +319,19 @@ export function computeAtsScore(
   let keywordScore = 0;
   let missingKeywords: AtsSuggestion[] = [];
   if (hasJd) {
-    const jdTokens = tokenize(jobDescription);
-    const freq = new Map<string, number>();
-    for (const t of jdTokens) freq.set(t, (freq.get(t) ?? 0) + 1);
-    const keywords = [...freq.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 40)
-      .map(([k]) => k);
-    const resumeText = resumeToText(doc).toLowerCase();
-    const matched = keywords.filter((k) => resumeText.includes(k));
+    const keywords = extractKeywords(jobDescription);
+    const resumeKeys = resumeCanonicalSet(doc);
+    const matched = keywords.filter((keyword) => resumeKeys.has(keyword.canonical));
     const coverage = keywords.length ? matched.length / keywords.length : 0;
     keywordScore = Math.round(coverage * 35);
     missingKeywords = keywords
-      .filter((k) => !matched.includes(k))
+      .filter((keyword) => !resumeKeys.has(keyword.canonical))
+      .sort((a, b) => b.weight - a.weight || compareSurface(a.surface, b.surface))
       .slice(0, 15)
-      .map((k) => ({ keyword: k, recommendedSection: suggestSection(k) }));
+      .map((keyword) => ({
+        keyword: keyword.surface,
+        recommendedSection: suggestSection(keyword.surface),
+      }));
     categories.push({
       id: "keywords",
       label: "Keyword match",
@@ -194,6 +342,9 @@ export function computeAtsScore(
           label: `${matched.length}/${keywords.length} job keywords present`,
           passed: coverage > 0.5,
           points: keywordScore,
+          why: "Most applicants are filtered on whether the posting's own vocabulary appears at all.",
+          // Only jump when there is somewhere concrete to add the top missing term.
+          fixSection: missingKeywords[0]?.recommendedSection,
         },
       ],
     });
@@ -206,26 +357,38 @@ export function computeAtsScore(
     label: "Sections",
     score: sectionScaled,
     max: hasJd ? 30 : 65,
-    checks: sectionPoints.map((s) => ({
-      label: s.label,
-      passed: s.present,
-      points: s.points,
-    })),
+    checks: sectionPoints,
   });
 
   // 4. Formatting / ATS-safety (weight 20)
   const descriptor = getTemplateDescriptor(settings.templateId);
-  const formatChecks = [
-    { label: "ATS-safe template", passed: descriptor.atsSafe, points: 8 },
-    { label: "Single reading order layout", passed: descriptor.columns <= 2, points: 4 },
+  const formatChecks: AtsCheck[] = [
+    {
+      label: "ATS-safe template",
+      passed: descriptor.atsSafe,
+      points: 8,
+      why: "Parsers read plain single-flow text most reliably, so visual layouts lose information.",
+    },
+    {
+      label: "Single reading order layout",
+      passed: descriptor.columns <= 2,
+      points: 4,
+      why: "Text extraction follows source order, and more than two columns scrambles it.",
+    },
     {
       label: "No empty sections forced visible",
       passed: (Object.keys(doc.sectionVisibility) as SectionId[]).every(
         (id) => !doc.sectionVisibility[id] || !isSectionEmpty(doc, id),
       ),
       points: 4,
+      why: "A heading with nothing under it reads as a gap in your history rather than a choice.",
     },
-    { label: "Semantic bullet lists", passed: true, points: 4 },
+    {
+      label: "Semantic bullet lists",
+      passed: true,
+      points: 4,
+      why: "Real list markup keeps each bullet a separate line instead of one run-on block.",
+    },
   ];
   categories.push({
     id: "formatting",

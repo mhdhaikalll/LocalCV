@@ -495,10 +495,15 @@ body {
   #resume-preview * {
     visibility: visible;
   }
+  /* Page margins come from `@page`, injected from the user's settings by
+     `lib/export/print-page-style.ts`. Element padding cannot do this job: it
+     applies only to the first printed page, which is why page two used to start
+     flush against the paper edge. */
   #resume-preview {
     position: absolute;
     inset: 0;
     margin: 0;
+    padding: 0 !important;
     width: 100%;
     min-height: auto;
     box-shadow: none;
@@ -506,10 +511,42 @@ body {
   .preview-scaler {
     transform: none !important;
   }
+  /* Mirror of `lib/layout/paginate.ts`. A section is atomic, so it never splits
+     across the bottom margin; the planner decides which sections start a page. */
+  #resume-preview section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
   #resume-preview h2 {
     break-after: avoid;
+    break-inside: avoid;
+    page-break-after: avoid;
+    page-break-inside: avoid;
   }
   #resume-preview .resume-entry {
     break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  #resume-preview ul,
+  #resume-preview li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  #resume-preview p {
+    orphans: 2;
+    widows: 2;
+  }
+  /* The planner's decision, replayed in print. The spacer has already pushed the
+     content down in the preview, so print does not need to re-add it; the
+     section simply starts a fresh page. */
+  #resume-preview [data-page-break-before="true"] {
+    break-before: page;
+    page-break-before: always;
+  }
+  /* Editor-only affordances, never part of the document. */
+  [data-page-spacer],
+  .page-sheet-edge,
+  .page-break-guide {
+    display: none !important;
   }
 }

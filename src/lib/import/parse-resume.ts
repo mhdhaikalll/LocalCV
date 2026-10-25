@@ -4,7 +4,7 @@ import type { ResumeDocument } from "@/lib/schema";
 import { createEmptyDocument } from "@/lib/schema";
 import { uuid } from "@/lib/uuid";
 
-const SECTION_HEADERS: Record<string, string> = {
+export const SECTION_HEADERS: Record<string, string> = {
   experience: "experience",
   "work experience": "experience",
   "professional experience": "experience",
@@ -109,7 +109,9 @@ function normalize(text: string): string {
 }
 
 /** Heuristic section splitting (09-import-parsing.md). */
-function splitSections(text: string): { header: string; rawHeader?: string; body: string[] }[] {
+export function splitSections(
+  text: string,
+): { header: string; rawHeader?: string; body: string[] }[] {
   const lines = text.split("\n").map((l) => l.trim());
   const sections: { header: string; rawHeader?: string; body: string[] }[] = [
     { header: "__contact__", body: [] },
@@ -125,9 +127,14 @@ function splitSections(text: string): { header: string; rawHeader?: string; body
   return sections;
 }
 
-const DATE_RE = /(?:19|20)\d{2}(?:\s*[-–]\s*(?:(?:19|20)\d{2}|present|current))?/i;
+export const DATE_RE = /(?:19|20)\d{2}(?:\s*[-–]\s*(?:(?:19|20)\d{2}|present|current))?/i;
 
-function parseBullets(body: string[]): string[] {
+export const GPA_RE =
+  /(?:cgpa|gpa|grade)\s*[:–-]?\s*(\d+(?:\.\d+)?(?:\s*\/\s*\d+(?:\.\d+)?)?)/i;
+
+export const BULLET_RE = /^[-•●▪◦·]\s*/;
+
+export function parseBullets(body: string[]): string[] {
   return body
     .map((l) => l.replace(/^[-•●▪◦·]\s*/, "").trim())
     .filter((l) => l.length > 1 && !/^\W+$/.test(l));
@@ -218,9 +225,7 @@ export async function parseResumeFile(file: File): Promise<ParseResult> {
             .map((p) => p.trim())
             .filter(Boolean)
             .join(", ");
-          const gpaMatch = line.match(
-            /(?:cgpa|gpa|grade)\s*[:–-]?\s*(\d+(?:\.\d+)?(?:\s*\/\s*\d+(?:\.\d+)?)?)/i,
-          );
+          const gpaMatch = line.match(GPA_RE);
           doc.education.push({
             id: uuid(),
             school: parts[0]?.trim() ?? line,

@@ -14,12 +14,14 @@ import {
   Text,
   Tooltip,
   UnstyledButton,
+  VisuallyHidden,
 } from "@mantine/core";
-import { IconArrowDown, IconArrowUp } from "@tabler/icons-react";
+import { IconArrowDown, IconArrowUp, IconGripVertical } from "@tabler/icons-react";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { TEMPLATE_REGISTRY } from "@/lib/templates/registry";
 import { FONT_STACKS } from "@/lib/templates/style-context";
 import { ResumeSettingsSchema, getSectionLabel } from "@/lib/schema";
+import { usePointerSort } from "./use-pointer-sort";
 
 export function TemplatePanel() {
   const settings = useResumeStore((s) => s.settings);
@@ -30,6 +32,19 @@ export function TemplatePanel() {
   const patch = (patchData: Partial<typeof settings>) => {
     const next = ResumeSettingsSchema.safeParse({ ...settings, ...patchData });
     if (next.success) updateSettings(next.data);
+  };
+
+  const sort = usePointerSort({
+    ids: document.sectionOrder,
+    onCommit: (order) => useResumeStore.getState().reorderSections(order),
+    labelFor: (id) => getSectionLabel(document, id),
+  });
+
+  const moveBy = (index: number, delta: number) => {
+    const next = [...document.sectionOrder];
+    const target = index + delta;
+    [next[target], next[index]] = [next[index], next[target]];
+    useResumeStore.getState().reorderSections(next);
   };
 
   return (
@@ -158,49 +173,91 @@ export function TemplatePanel() {
       </div>
 
       <Fieldset legend="Section order">
-        <Stack gap={4}>
-          {document.sectionOrder.map((id, i) => (
-            <Group key={id} justify="space-between" wrap="nowrap">
-              <Text size="sm" style={{ textTransform: "capitalize" }}>
-                {getSectionLabel(document, id)}
-              </Text>
-              <Group gap={4} wrap="nowrap">
-                <Tooltip label="Move up" withArrow>
+        <div role="list" aria-roledescription="sortable list" style={{ position: "relative" }}>
+          {sort.indicatorTop !== null && sort.activeId !== null && (
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: sort.indicatorTop - 1,
+                height: 2,
+                background: "var(--mantine-color-brand-6)",
+                borderRadius: 1,
+                pointerEvents: "none",
+                zIndex: 2,
+              }}
+            />
+          )}
+          {document.sectionOrder.map((id, i) => {
+            const label = getSectionLabel(document, id);
+            const dragging = sort.activeId === id;
+            return (
+              <Group
+                key={id}
+                role="listitem"
+                ref={(element) => sort.setRowRef(id, element)}
+                justify="space-between"
+                wrap="nowrap"
+                gap={4}
+                py={4}
+                style={{
+                  position: "relative",
+                  touchAction: "pan-y",
+                  background: "var(--mantine-color-white)",
+                  boxShadow: dragging ? "0 2px 8px rgba(0, 0, 0, 0.16)" : undefined,
+                  zIndex: dragging ? 1 : undefined,
+                }}
+              >
+                <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
                   <ActionIcon
                     variant="subtle"
                     color="gray"
                     size="sm"
-                    disabled={i === 0}
-                    aria-label={`Move ${id} up`}
-                    onClick={() => {
-                      const next = [...document.sectionOrder];
-                      [next[i - 1], next[i]] = [next[i], next[i - 1]];
-                      useResumeStore.getState().reorderSections(next);
+                    aria-label={`Reorder ${label}`}
+                    style={{ cursor: "grab", touchAction: "none" }}
+                    onPointerDown={(event) => {
+                      sort.startDrag(id, i, event);
                     }}
                   >
-                    <IconArrowUp size={14} />
+                    <IconGripVertical size={14} />
                   </ActionIcon>
-                </Tooltip>
-                <Tooltip label="Move down" withArrow>
-                  <ActionIcon
-                    variant="subtle"
-                    color="gray"
-                    size="sm"
-                    disabled={i === document.sectionOrder.length - 1}
-                    aria-label={`Move ${id} down`}
-                    onClick={() => {
-                      const next = [...document.sectionOrder];
-                      [next[i + 1], next[i]] = [next[i], next[i + 1]];
-                      useResumeStore.getState().reorderSections(next);
-                    }}
-                  >
-                    <IconArrowDown size={14} />
-                  </ActionIcon>
-                </Tooltip>
+                  <Text size="sm" style={{ textTransform: "capitalize" }}>
+                    {label}
+                  </Text>
+                </Group>
+                <Group gap={4} wrap="nowrap">
+                  <Tooltip label="Move up" withArrow>
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      size="sm"
+                      disabled={i === 0}
+                      aria-label={`Move ${label} up`}
+                      onClick={() => moveBy(i, -1)}
+                    >
+                      <IconArrowUp size={14} />
+                    </ActionIcon>
+                  </Tooltip>
+                  <Tooltip label="Move down" withArrow>
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      size="sm"
+                      disabled={i === document.sectionOrder.length - 1}
+                      aria-label={`Move ${label} down`}
+                      onClick={() => moveBy(i, 1)}
+                    >
+                      <IconArrowDown size={14} />
+                    </ActionIcon>
+                  </Tooltip>
+                </Group>
               </Group>
-            </Group>
-          ))}
-        </Stack>
+            );
+          })}
+        </div>
+        <VisuallyHidden aria-live="polite">{sort.announcement}</VisuallyHidden>
       </Fieldset>
     </Stack>
   );

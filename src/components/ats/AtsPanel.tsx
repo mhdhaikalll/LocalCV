@@ -7,6 +7,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Collapse,
   Group,
   Progress,
   RingProgress,
@@ -15,14 +16,16 @@ import {
   Textarea,
   ThemeIcon,
   Tooltip,
+  UnstyledButton,
 } from "@mantine/core";
-import { IconCheck } from "@tabler/icons-react";
+import { IconCheck, IconChevronDown, IconWand } from "@tabler/icons-react";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { computeAtsScore } from "@/lib/ats/scoring";
 import { resumeToText } from "@/lib/ats/scoring";
 import { requestAtsReview, AiError, type AtsReviewFeedback } from "@/lib/ai/client";
 import { sanitizeAiText } from "@/lib/ai/sanitize";
 import { useAiEnabled } from "@/lib/ai/use-ai-enabled";
+import type { SectionId } from "@/lib/schema";
 
 function scoreColor(score: number): string {
   if (score >= 75) return "green";
@@ -30,12 +33,17 @@ function scoreColor(score: number): string {
   return "red";
 }
 
-export function AtsPanel() {
+export function AtsPanel({
+  onJumpToSection,
+}: {
+  onJumpToSection?: (id: SectionId) => void;
+}) {
   const aiEnabled = useAiEnabled();
   const document = useResumeStore((s) => s.document);
   const settings = useResumeStore((s) => s.settings);
   const jobDescription = useResumeStore((s) => s.jobDescription);
   const setJobDescription = useResumeStore((s) => s.setJobDescription);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   const [aiReview, setAiReview] = useState<{
     score: number;
@@ -105,6 +113,11 @@ export function AtsPanel() {
             Deterministic local score — identical input always yields the same score.
           </Text>
           <Text size="xs" c="dimmed">
+            Keyword matching understands word stems (&quot;managed&quot; matches
+            &quot;manage&quot;), two- and three-word phrases such as &quot;machine
+            learning&quot;, and common skill aliases like React.js and K8s.
+          </Text>
+          <Text size="xs" c="dimmed">
             This is a heuristic, not an ATS emulator.
           </Text>
         </Stack>
@@ -128,21 +141,64 @@ export function AtsPanel() {
             mb="xs"
           />
           <Stack gap={2}>
-            {cat.checks.map((check) => (
-              <Group key={check.label} gap="xs" wrap="nowrap">
-                <ThemeIcon
-                  size={16}
-                  radius="xl"
-                  variant={check.passed ? "filled" : "outline"}
-                  color={check.passed ? "green" : "gray"}
-                >
-                  <IconCheck size={10} />
-                </ThemeIcon>
-                <Text size="xs" c={check.passed ? undefined : "dimmed"}>
-                  {check.label}
-                </Text>
-              </Group>
-            ))}
+            {cat.checks.map((check) => {
+              const key = `${cat.id}:${check.label}`;
+              const open = expanded === key;
+              const fix = check.fixSection;
+              return (
+                <div key={key}>
+                  <Group gap={4} wrap="nowrap" align="flex-start">
+                    <UnstyledButton
+                      onClick={() => setExpanded(open ? null : key)}
+                      aria-expanded={open}
+                      aria-label={`Why: ${check.label}`}
+                      style={{ flex: 1, minWidth: 0 }}
+                    >
+                      <Group gap="xs" wrap="nowrap" align="flex-start">
+                        <ThemeIcon
+                          size={16}
+                          radius="xl"
+                          variant={check.passed ? "filled" : "outline"}
+                          color={check.passed ? "green" : "gray"}
+                          mt={2}
+                        >
+                          <IconCheck size={10} />
+                        </ThemeIcon>
+                        <Text size="xs" c={check.passed ? undefined : "dimmed"} style={{ flex: 1 }}>
+                          {check.label}
+                        </Text>
+                        <IconChevronDown
+                          size={12}
+                          style={{
+                            flexShrink: 0,
+                            marginTop: 3,
+                            transform: open ? "rotate(180deg)" : undefined,
+                            transition: "transform 150ms ease",
+                            opacity: 0.6,
+                          }}
+                        />
+                      </Group>
+                    </UnstyledButton>
+                    {!check.passed && fix && onJumpToSection && (
+                      <Button
+                        size="compact-xs"
+                        variant="subtle"
+                        leftSection={<IconWand size={12} />}
+                        onClick={() => onJumpToSection(fix)}
+                        aria-label={`Fix: go to ${fix}`}
+                      >
+                        Fix
+                      </Button>
+                    )}
+                  </Group>
+                  <Collapse expanded={open} keepMounted={false}>
+                    <Text size="xs" c="dimmed" pl={22} pt={2} pb={4}>
+                      {check.why}
+                    </Text>
+                  </Collapse>
+                </div>
+              );
+            })}
           </Stack>
         </Card>
       ))}
