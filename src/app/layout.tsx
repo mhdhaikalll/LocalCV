@@ -43,6 +43,28 @@ const theme = createTheme({
       "#5a686f",
       "#48535a",
     ],
+    /*
+     * Ordered light to dark, as Mantine expects.
+     *
+     * This ramp drives every input, select, menu and default border, so leaving
+     * the built-in values put neutral purple-grey controls (dark-6 "#25262b")
+     * beside the teal-tinted surfaces in globals.css. That mismatch is what read
+     * as wrong colours in dark mode. Two shades are also raised for legibility:
+     * dark-3 is the placeholder colour and dark-4 draws input borders, and
+     * Mantine's defaults sit at 3.7:1 and 1.5:1 against their surfaces.
+     */
+    dark: [
+      "#e4e9ea", // 0 brightest text
+      "#c8d2d5", // 1
+      "#9aa8ad", // 2 dimmed text
+      "#849299", // 3 placeholder, 4.5:1 on an input
+      "#647377", // 4 input and card borders, 3:1 on both surfaces
+      "#2b3336", // 5 filled input surface
+      "#202628", // 6 default input and raised surface
+      "#1a1f21", // 7 page body
+      "#141819", // 8 muted surface
+      "#0e1213", // 9 deepest shade
+    ],
   },
   fontFamily: "var(--font-inter), system-ui, sans-serif",
   defaultRadius: "md",

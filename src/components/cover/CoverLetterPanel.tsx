@@ -656,11 +656,11 @@ export function CoverLetterPanel({
               ).map((token, index) => (
                 <span
                   key={index}
-                  style={
+                  className={
                     token.op === "add"
-                      ? { background: "#d3f9d8", color: "#1b4332" }
+                      ? "diff-add"
                       : token.op === "remove"
-                        ? { background: "#ffe3e3", color: "#7a1f1f", textDecoration: "line-through" }
+                        ? "diff-remove"
                         : undefined
                   }
                 >

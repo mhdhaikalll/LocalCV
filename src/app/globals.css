@@ -92,6 +92,29 @@ body {
 }
 
 /* Editor panes */
+
+/* Word-level diff in the polish review. Fixed light hues would be unreadable on
+   a dark surface, so each scheme gets its own pair with contrast checked. */
+.diff-add {
+  background: #d3f9d8;
+  color: #1b4332;
+}
+
+.diff-remove {
+  background: #ffe3e3;
+  color: #7a1f1f;
+  text-decoration: line-through;
+}
+
+[data-mantine-color-scheme="dark"] .diff-add {
+  background: rgba(64, 192, 87, 0.24);
+  color: #b2f2bb;
+}
+
+[data-mantine-color-scheme="dark"] .diff-remove {
+  background: rgba(250, 82, 82, 0.24);
+  color: #ffc9c9;
+}
 .editor-form-pane {
   display: flex;
 }
@@ -256,11 +279,6 @@ body {
    brand-9 almost black. These overrides keep selected/emphasis states readable
    on the dark surface without touching the ramp itself, which the resume page
    and the PDF still rely on. */
-[data-mantine-color-scheme="dark"] .template-option[data-active] {
-  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
-  border-color: var(--mantine-color-brand-4);
-}
-
 [data-mantine-color-scheme="dark"] .landing-mark {
   border-color: var(--mantine-color-brand-4);
 }
@@ -279,6 +297,11 @@ body {
 .landing-check {
   color: var(--mantine-color-brand-6);
   flex-shrink: 0;
+}
+
+[data-mantine-color-scheme="dark"] .landing-check {
+  /* brand-6 is a dark teal: legible on white, muddy on the dark surface. */
+  color: var(--mantine-color-brand-4);
 }
 
 /* Preview card shared by hero and template sections */
@@ -414,8 +437,11 @@ body {
 
 .template-option[data-active] {
   border-color: var(--mantine-color-brand-6);
-  background: var(--mantine-color-brand-0);
+  /* brand-0 is near-white, which would be brighter than the panel in dark mode.
+     A translucent tint carries the selection state in both schemes. */
+  background: color-mix(in srgb, var(--mantine-color-brand-6) 12%, transparent);
 }
+
 
 .template-columns {
   flex-shrink: 0;

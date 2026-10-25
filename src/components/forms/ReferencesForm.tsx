@@ -37,7 +37,7 @@ export function ReferencesForm() {
         Up to {MAX_REFERENCES} references. They render side by side on the resume.
       </Text>
       {references.map((ref, i) => (
-        <Card key={ref.id} withBorder radius="md" padding="sm" bg="gray.0">
+        <Card key={ref.id} withBorder radius="md" padding="sm" bg="var(--color-surface-muted)">
           <Stack gap="xs">
             <Group justify="space-between">
               <Text size="xs" fw={600} c="dimmed">

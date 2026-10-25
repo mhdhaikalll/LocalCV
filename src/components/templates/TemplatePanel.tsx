@@ -67,7 +67,10 @@ export function TemplatePanel() {
                     : undefined,
                 background:
                   settings.templateId === t.id
-                    ? "var(--mantine-color-brand-0)"
+                    ? // A brand tint, not brand-0: that shade is near-white and
+                      // would leave the selected card brighter than the panel in
+                      // dark mode.
+                      "color-mix(in srgb, var(--mantine-color-brand-6) 14%, transparent)"
                     : undefined,
               }}
             >

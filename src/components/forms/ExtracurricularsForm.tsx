@@ -52,7 +52,7 @@ function ExtracurricularCard({ item, index }: { item: Extracurricular; index: nu
     });
 
   return (
-    <Card withBorder radius="md" padding="sm" bg="gray.0">
+    <Card withBorder radius="md" padding="sm" bg="var(--color-surface-muted)">
       <Stack gap="xs">
         <Group justify="space-between">
           <Text size="xs" fw={600} c="dimmed">

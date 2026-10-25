@@ -85,7 +85,11 @@ export function ImportPanel() {
             borderColor: dragOver
               ? "var(--mantine-color-brand-6)"
               : "var(--color-border)",
-            background: dragOver ? "var(--mantine-color-brand-0)" : undefined,
+            background: dragOver
+              ? // A translucent brand tint reads as "active" in both schemes;
+                // brand-0 would be near-white and vanish on the dark surface.
+                "color-mix(in srgb, var(--mantine-color-brand-6) 14%, transparent)"
+              : undefined,
           }}
         >
           <Center>

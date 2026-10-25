@@ -33,7 +33,7 @@ export function CertificationsForm() {
   return (
     <Stack gap="sm">
       {certifications.map((cert, i) => (
-        <Card key={cert.id} withBorder radius="md" padding="sm" bg="gray.0">
+        <Card key={cert.id} withBorder radius="md" padding="sm" bg="var(--color-surface-muted)">
           <Stack gap="xs">
             <Group justify="space-between">
               <Text size="xs" fw={600} c="dimmed">

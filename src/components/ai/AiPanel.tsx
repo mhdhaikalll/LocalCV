@@ -124,7 +124,7 @@ export function AiPanel() {
       )}
 
       {result && (
-        <Card withBorder radius="md" padding="sm" bg="gray.0">
+        <Card withBorder radius="md" padding="sm" bg="var(--color-surface-muted)">
           <Text size="xs" fw={600} mb={4}>
             Result (AI-generated — review before using)
           </Text>
