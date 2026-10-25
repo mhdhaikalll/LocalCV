@@ -1,17 +1,42 @@
 import { z } from "zod";
 
-export const AI_ACTIONS = ["rewrite", "summarize", "suggest"] as const;
+export const AI_ACTIONS = ["rewrite", "summarize", "suggest", "polish-letter"] as const;
 
-export const AiRequestSchema = z.object({
-  action: z.enum(AI_ACTIONS),
-  content: z.string().min(1).max(8000),
-  context: z
-    .object({
-      role: z.string().max(200).optional(),
-      section: z.string().max(100).optional(),
-    })
-    .optional(),
-});
+/** Caps for the polish request, shared with the client so both agree. */
+export const POLISH_LIMITS = {
+  letterText: 12000,
+  jobDescription: 12000,
+  tone: 20,
+} as const;
+
+/**
+ * Discriminated on `action`, so the polish request can carry its own fields
+ * without widening the shape of the three text-only actions. Every field is
+ * length-capped: the provider is a paid dependency, and an uncapped prompt is a
+ * cost and abuse vector.
+ */
+export const AiRequestSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.enum(["rewrite", "summarize", "suggest"]),
+    content: z.string().min(1).max(8000),
+    context: z
+      .object({
+        role: z.string().max(200).optional(),
+        section: z.string().max(100).optional(),
+      })
+      .optional(),
+  }),
+  z.object({
+    action: z.literal("polish-letter"),
+    content: z.string().min(1).max(POLISH_LIMITS.letterText),
+    context: z
+      .object({
+        tone: z.string().max(POLISH_LIMITS.tone).optional(),
+        jobDescription: z.string().max(POLISH_LIMITS.jobDescription).optional(),
+      })
+      .optional(),
+  }),
+]);
 
 export const AtsReviewRequestSchema = z.object({
   resumeText: z.string().min(1).max(30000),

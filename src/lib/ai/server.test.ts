@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { aiEnabled, completionsUrl, getAiEnv } from "./server";
+import {
+  AI_ACTIONS,
+  AiRequestSchema,
+  POLISH_LIMITS,
+  aiEnabled,
+  completionsUrl,
+  getAiEnv,
+} from "./server";
 
 const AI_KEYS = [
   "AI_ENABLED",
@@ -94,5 +101,70 @@ describe("getAiEnv", () => {
 
   it("fails closed when the flag is unset", () => {
     expect(aiEnabled()).toBe(false);
+  });
+});
+
+describe("AiRequestSchema", () => {
+  it("accepts the three text actions unchanged", () => {
+    for (const action of ["rewrite", "summarize", "suggest"] as const) {
+      const parsed = AiRequestSchema.safeParse({ action, content: "text" });
+      expect(parsed.success, action).toBe(true);
+    }
+  });
+
+  it("accepts a polish request with its own context", () => {
+    const parsed = AiRequestSchema.safeParse({
+      action: "polish-letter",
+      content: "Dear Ms Chen, ...",
+      context: { tone: "formal", jobDescription: "We are hiring a designer." },
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success && parsed.data.action === "polish-letter") {
+      expect(parsed.data.context?.tone).toBe("formal");
+    }
+  });
+
+  it("rejects a polish request with no letter text", () => {
+    const parsed = AiRequestSchema.safeParse({ action: "polish-letter", content: "" });
+    expect(parsed.success).toBe(false);
+  });
+
+  it("caps the letter and job description lengths", () => {
+    const tooLong = AiRequestSchema.safeParse({
+      action: "polish-letter",
+      content: "x".repeat(POLISH_LIMITS.letterText + 1),
+    });
+    expect(tooLong.success).toBe(false);
+
+    const jdTooLong = AiRequestSchema.safeParse({
+      action: "polish-letter",
+      content: "letter",
+      context: { jobDescription: "y".repeat(POLISH_LIMITS.jobDescription + 1) },
+    });
+    expect(jdTooLong.success).toBe(false);
+  });
+
+  it("rejects an unknown action", () => {
+    expect(AiRequestSchema.safeParse({ action: "translate", content: "x" }).success).toBe(
+      false,
+    );
+  });
+
+  it("lists polish-letter as a known action", () => {
+    expect(AI_ACTIONS).toContain("polish-letter");
+  });
+
+  it("rejects polish fields sent under a text-only action", () => {
+    // The union is discriminated, so a tone on `rewrite` is stripped rather than
+    // widening that action's shape.
+    const parsed = AiRequestSchema.safeParse({
+      action: "rewrite",
+      content: "text",
+      context: { tone: "formal" },
+    });
+    if (parsed.success && parsed.data.action === "rewrite") {
+      expect("tone" in (parsed.data.context ?? {})).toBe(false);
+    }
   });
 });

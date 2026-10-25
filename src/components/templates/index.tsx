@@ -14,6 +14,8 @@ export interface ResumeTemplateProps {
   pageBreaks?: string[];
   /** Whitespace in px inserted before a section so it starts a new page. */
   pageSpacers?: Record<string, number>;
+  /** Marks this surface as the active print root. */
+  printable?: boolean;
 }
 
 function makeTemplate(variant: TemplateStyleVariant, layout?: "two-column" | "timeline") {
@@ -24,6 +26,7 @@ function makeTemplate(variant: TemplateStyleVariant, layout?: "two-column" | "ti
     decorative,
     pageBreaks,
     pageSpacers,
+    printable,
   }: ResumeTemplateProps) {
     return (
       <TemplateRenderer
@@ -35,6 +38,7 @@ function makeTemplate(variant: TemplateStyleVariant, layout?: "two-column" | "ti
         decorative={decorative}
         pageBreaks={pageBreaks}
         pageSpacers={pageSpacers}
+        printable={printable}
       />
     );
   };
@@ -78,6 +82,7 @@ export function ResumePreview({
   decorative,
   pageBreaks,
   pageSpacers,
+  printable,
 }: ResumeTemplateProps) {
   const Template = TEMPLATE_COMPONENTS[settings.templateId] ?? ClassicTemplate;
   return (
@@ -88,6 +93,7 @@ export function ResumePreview({
       decorative={decorative}
       pageBreaks={pageBreaks}
       pageSpacers={pageSpacers}
+      printable={printable}
     />
   );
 }

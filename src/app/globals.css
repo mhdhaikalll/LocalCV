@@ -563,20 +563,24 @@ body {
   }
 }
 
-/* ---- Print stylesheet (08-pdf-export.md) ---- */
+/* ---- Print stylesheet (08-pdf-export.md) ----
+   Attribute-driven rather than id-driven, because the editor now prints two
+   different surfaces: the resume and the cover letter. Exactly one node carries
+   `data-print-root` at a time; the editor sets it on whichever surface the user
+   asked to print, so the two can never print on top of each other. */
 @media print {
   body * {
     visibility: hidden;
   }
-  #resume-preview,
-  #resume-preview * {
+  [data-print-root],
+  [data-print-root] * {
     visibility: visible;
   }
   /* Page margins come from `@page`, injected from the user's settings by
      `lib/export/print-page-style.ts`. Element padding cannot do this job: it
      applies only to the first printed page, which is why page two used to start
      flush against the paper edge. */
-  #resume-preview {
+  [data-print-root] {
     position: absolute;
     inset: 0;
     margin: 0;
@@ -590,35 +594,39 @@ body {
   }
   /* Mirror of `lib/layout/paginate.ts`. A section is atomic, so it never splits
      across the bottom margin; the planner decides which sections start a page. */
-  #resume-preview section {
+  [data-print-root] section {
     break-inside: avoid;
     page-break-inside: avoid;
   }
-  #resume-preview h2 {
+  [data-print-root] h2 {
     break-after: avoid;
     break-inside: avoid;
     page-break-after: avoid;
     page-break-inside: avoid;
   }
-  #resume-preview .resume-entry {
+  [data-print-root] .resume-entry {
     break-inside: avoid;
     page-break-inside: avoid;
   }
-  #resume-preview ul,
-  #resume-preview li {
+  [data-print-root] ul,
+  [data-print-root] li {
     break-inside: avoid;
     page-break-inside: avoid;
   }
-  #resume-preview p {
+  [data-print-root] p {
     orphans: 2;
     widows: 2;
   }
   /* The planner's decision, replayed in print. The spacer has already pushed the
      content down in the preview, so print does not need to re-add it; the
      section simply starts a fresh page. */
-  #resume-preview [data-page-break-before="true"] {
+  [data-print-root] [data-page-break-before="true"] {
     break-before: page;
     page-break-before: always;
+  }
+  /* A letter is one page, so it never needs a forced break. */
+  [data-print-root] .cover-letter-body {
+    break-inside: auto;
   }
   /* Editor-only affordances, never part of the document. */
   [data-page-spacer],

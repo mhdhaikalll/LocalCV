@@ -10,6 +10,7 @@ import { useResumeStore } from "@/lib/store/resume-store";
 export function ImportPanel() {
   const replaceDocument = useResumeStore((s) => s.replaceDocument);
   const replaceSettings = useResumeStore((s) => s.replaceSettings);
+  const setCoverLetter = useResumeStore((s) => s.setCoverLetter);
   const [status, setStatus] = useState<"idle" | "parsing" | "review" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -29,9 +30,12 @@ export function ImportPanel() {
           return;
         }
         if (result.settings) replaceSettings(result.settings);
+        // Only when the backup actually carried one, so importing a plain
+        // resume does not wipe a letter the user is drafting.
+        if (result.coverLetter) setCoverLetter(result.coverLetter);
         replaceDocument(result.document!, { markImport: true });
         setStatus("review");
-        setMessage("Imported resume JSON — review sections before continuing.");
+        setMessage("Imported resume JSON - review sections before continuing.");
         return;
       }
       const parsed = await parseResumeFile(file);

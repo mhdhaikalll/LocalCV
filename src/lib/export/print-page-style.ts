@@ -15,7 +15,7 @@ const STYLE_ID = "resume-print-page-style";
  * stylesheet; this keeps a single `<style>` element in sync instead of
  * re-rendering the document tree.
  */
-export function usePrintPageStyle(settings: ResumeSettings) {
+export function usePrintPageStyle(settings: Pick<ResumeSettings, "pageSize" | "margins">) {
   useEffect(() => {
     const page = PAGE_SIZES[settings.pageSize];
     const rule = [

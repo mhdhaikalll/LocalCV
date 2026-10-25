@@ -4,7 +4,9 @@ import {
   buildExportEnvelope,
   ExportEnvelopeSchema,
   ResumeSettingsSchema,
+  sanitizeCoverLetter,
   sanitizeDocument,
+  type CoverLetter,
   type ResumeDocument,
   type ResumeSettings,
 } from "@/lib/schema";
@@ -18,8 +20,12 @@ function downloadBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export function exportJson(document: ResumeDocument, settings: ResumeSettings): void {
-  const envelope = buildExportEnvelope(document, settings);
+export function exportJson(
+  document: ResumeDocument,
+  settings: ResumeSettings,
+  coverLetter?: CoverLetter,
+): void {
+  const envelope = buildExportEnvelope(document, settings, coverLetter);
   const blob = new Blob([JSON.stringify(envelope, null, 2)], {
     type: "application/json",
   });
@@ -31,6 +37,8 @@ export interface ImportJsonResult {
   error?: string;
   document?: ResumeDocument;
   settings?: ResumeSettings;
+  /** Present only when the backup carried a letter. */
+  coverLetter?: CoverLetter;
 }
 
 export async function importJson(file: File): Promise<ImportJsonResult> {
@@ -46,17 +54,27 @@ export async function importJson(file: File): Promise<ImportJsonResult> {
       ok: true,
       document: sanitizeDocument(parsed.data.document),
       settings: parsed.data.settings,
+      coverLetter: parsed.data.coverLetter
+        ? sanitizeCoverLetter(parsed.data.coverLetter)
+        : undefined,
     };
   }
 
   // Legacy or slightly malformed backups (e.g. blank optional URL fields):
   // salvage the document rather than rejecting the whole file.
-  const loose = raw as { format?: unknown; version?: unknown; document?: unknown; settings?: unknown };
+  const loose = raw as {
+    format?: unknown;
+    version?: unknown;
+    document?: unknown;
+    settings?: unknown;
+    coverLetter?: unknown;
+  };
   if (loose && loose.format === "resume-maker" && loose.version === 1 && loose.document) {
     return {
       ok: true,
       document: sanitizeDocument(loose.document),
       settings: loose.settings ? safeSettings(loose.settings) : undefined,
+      coverLetter: loose.coverLetter ? sanitizeCoverLetter(loose.coverLetter) : undefined,
     };
   }
 

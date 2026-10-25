@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import {
   Accordion,
@@ -31,6 +31,7 @@ import {
   IconFileUpload,
   IconInfoCircle,
   IconLayoutGrid,
+  IconMail,
   IconRobot,
 } from "@tabler/icons-react";
 import { useResumeStore } from "@/lib/store/resume-store";
@@ -38,9 +39,10 @@ import { useAiEnabled } from "@/lib/ai/use-ai-enabled";
 import { EditorTour } from "./EditorTour";
 import { PageFitBadge } from "./PageFitBadge";
 import { PreviewMeasurementProvider, usePreviewMeasurement } from "./preview-measurement";
+import { ScaledPage } from "@/components/preview/ScaledPage";
 import { useUndoRedoShortcuts } from "@/lib/store/use-undo-redo";
 import { computeAtsScore } from "@/lib/ats/scoring";
-import { measurePageUnits, measureResumeContentHeight } from "@/lib/layout/measure";
+import { measurePageUnits } from "@/lib/layout/measure";
 import { PAGE_HEIGHT_PX } from "@/lib/layout/page-fit";
 import { usePrintPageStyle } from "@/lib/export/print-page-style";
 import { ColorSchemeToggle } from "./ColorSchemeToggle";
@@ -50,6 +52,7 @@ import { TemplatePanel } from "@/components/templates/TemplatePanel";
 import { AtsPanel } from "@/components/ats/AtsPanel";
 import { AiPanel } from "@/components/ai/AiPanel";
 import { ImportPanel } from "@/components/import/ImportPanel";
+import { CoverLetterPanel } from "@/components/cover/CoverLetterPanel";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { SummaryForm } from "@/components/forms/SummaryForm";
 import { ExperienceForm } from "@/components/forms/ExperienceForm";
@@ -64,7 +67,7 @@ import { AdditionalForm } from "@/components/forms/AdditionalForm";
 import type { SectionId } from "@/lib/schema";
 import { useTranslations } from "next-intl";
 
-type Panel = "none" | "template" | "ats" | "ai" | "import";
+type Panel = "none" | "template" | "ats" | "ai" | "import" | "cover";
 type MobileTab = "form" | "preview";
 
 const SECTION_TABS: { id: SectionId; labelKey: string }[] = [
@@ -160,68 +163,35 @@ function PreviewBreakDocument({
   );
 }
 
+/**
+ * The resume preview: a scaled, page-shaped surface that also feeds the
+ * measurement provider, so the page-fit badge and the break planner read the
+ * same geometry the user sees.
+ */
 function PreviewScaler({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const { contentHeight, setContentHeight, scale, setScale, setUnits, pages } =
-    usePreviewMeasurement();
+  const { setContentHeight, setScale, setUnits, pages } = usePreviewMeasurement();
+  const contentElementRef = useRef<HTMLElement | null>(null);
   const settings = useResumeStore((s) => s.settings);
+  const pageWidthPx = 816;
   const pageHeightPx = PAGE_HEIGHT_PX[settings.pageSize] ?? PAGE_HEIGHT_PX.Letter;
 
-  useEffect(() => {
-    const container = ref.current;
-    const content = contentRef.current;
-    if (!container || !content) return;
-    const update = () => {
-      const width = container.clientWidth - 16; // account for padding
-      const nextScale = Math.min(1, width / 816);
-      setScale(nextScale);
-      const root = content.firstElementChild as HTMLElement | null;
-      if (!root) return;
-      setContentHeight(measureResumeContentHeight(root));
-      setUnits(measurePageUnits(root, nextScale));
-    };
-    const observer = new ResizeObserver(update);
-    observer.observe(container);
-    observer.observe(content);
-    update();
-    return () => observer.disconnect();
-  }, [setContentHeight, setScale, setUnits]);
-
-  const sheetHeight = Math.max(contentHeight, pages * pageHeightPx);
-
   return (
-    <Box
-      ref={ref}
-      h="100%"
-      w="100%"
-      style={{
-        overflow: "auto",
-        background: "var(--color-backdrop)",
-        padding: 8,
+    <ScaledPage
+      pageWidthPx={pageWidthPx}
+      onContentRef={(element) => {
+        if (!element) return;
+        contentElementRef.current = element.firstElementChild as HTMLElement | null;
       }}
-    >
-      <div
-        style={{
-          margin: "0 auto",
-          width: Math.ceil(816 * scale),
-          height: Math.ceil(sheetHeight * scale),
-          position: "relative",
-        }}
-      >
-        <div
-          ref={contentRef}
-          className="preview-scaler"
-          style={{
-            transform: `scale(${scale})`,
-            transformOrigin: "top left",
-            width: 816,
-            position: "absolute",
-            top: 0,
-            left: 0,
-          }}
-        >
-          {children}
+      onMeasured={({ scale, contentHeight }) => {
+        setScale(scale);
+        setContentHeight(contentHeight);
+        // `contentHeight` is the whole flow including page spacers; the planner
+        // needs the natural per-section geometry instead.
+        const root = contentElementRef.current;
+        if (root) setUnits(measurePageUnits(root, scale));
+      }}
+      overlay={() => (
+        <>
           {/* Draw each sheet edge, so the gap between pages is visible even
               inside one continuous flow. */}
           {Array.from({ length: Math.max(0, pages - 1) }, (_, index) => {
@@ -258,12 +228,13 @@ function PreviewScaler({ children }: { children: React.ReactNode }) {
               </div>
             );
           })}
-        </div>
-      </div>
-    </Box>
+        </>
+      )}
+    >
+      {children}
+    </ScaledPage>
   );
 }
-
 export function Editor() {
   const t = useTranslations();
   const aiEnabled = useAiEnabled();
@@ -274,6 +245,7 @@ export function Editor() {
   const past = useResumeStore((s) => s.past);
   const future = useResumeStore((s) => s.future);
   const importedAt = useResumeStore((s) => s.importedAt);
+  const coverLetter = useResumeStore((s) => s.coverLetter);
 
   const [panel, setPanel] = useState<Panel>("none");
   const [mobileTab, setMobileTab] = useState<MobileTab>("form");
@@ -308,7 +280,16 @@ export function Editor() {
   );
 
   const printRef = useRef<HTMLDivElement>(null);
-  usePrintPageStyle(settings);
+  // A single owner for `@page`: the margins must describe whichever surface is
+  // currently the print root. Two competing hooks would let the loser win.
+  usePrintPageStyle(
+    // The letter sets its margins as padding on the page element, so `@page`
+    // must be zero or the two would stack. The resume relies on `@page`
+    // instead, because element padding only applies to the first printed page.
+    panel === "cover"
+      ? { pageSize: coverLetter.layout.pageSize, margins: 0 }
+      : settings,
+  );
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle:
@@ -407,11 +388,17 @@ export function Editor() {
                   </Menu.Item>
                   <Menu.Item
                     leftSection={<IconDownload size={16} />}
-                    onClick={() => exportJson(document, settings)}
+                    onClick={() => exportJson(document, settings, coverLetter)}
                   >
                     Export JSON
                   </Menu.Item>
                   <Menu.Divider />
+                  <Menu.Item
+                    leftSection={<IconMail size={16} />}
+                    onClick={() => openPanel("cover")}
+                  >
+                    Cover letter
+                  </Menu.Item>
                   <Menu.Item
                     leftSection={<IconLayoutGrid size={16} />}
                     onClick={() => openPanel("template")}
@@ -477,6 +464,14 @@ export function Editor() {
               <Button
                 variant="default"
                 size="compact-sm"
+                leftSection={<IconMail size={14} />}
+                onClick={() => openPanel("cover")}
+              >
+                Cover letter
+              </Button>
+              <Button
+                variant="default"
+                size="compact-sm"
                 leftSection={<IconLayoutGrid size={14} />}
                 data-tour="template"
                 onClick={() => openPanel("template")}
@@ -494,7 +489,7 @@ export function Editor() {
                 <ActionIcon
                   variant="default"
                   size="lg"
-                  onClick={() => exportJson(document, settings)}
+                  onClick={() => exportJson(document, settings, coverLetter)}
                   aria-label="Export JSON"
                 >
                   <IconDownload size={16} />
@@ -657,6 +652,16 @@ export function Editor() {
           padding="md"
         >
           <ImportPanel />
+        </Drawer>
+        <Drawer
+          opened={panel === "cover"}
+          onClose={() => setPanel("none")}
+          title="Cover letter"
+          position="right"
+          size={isMobile ? "100%" : "md"}
+          padding="md"
+        >
+          <CoverLetterPanel onJumpToSection={jumpToSection} />
         </Drawer>
         <Modal
           opened={printHintOpen}

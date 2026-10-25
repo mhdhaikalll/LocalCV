@@ -61,11 +61,32 @@ export type {
   JobDescription,
   ExportEnvelope,
 } from "./settings";
+export {
+  COVER_LETTER_TONES,
+  CoverLetterToneSchema,
+  CoverLetterLayoutSchema,
+  CoverLetterRecipientSchema,
+  CoverLetterSchema,
+  MAX_PARAGRAPHS,
+  MAX_PARAGRAPH_LENGTH,
+  createEmptyCoverLetter,
+  isCoverLetterEmpty,
+  isValidIsoDate,
+  sanitizeCoverLetter,
+  todayIso,
+} from "./cover-letter";
+export type {
+  CoverLetter,
+  CoverLetterLayout,
+  CoverLetterRecipient,
+  CoverLetterTone,
+} from "./cover-letter";
 
 export const STORAGE_KEYS = {
   resume: "rm.resume.v1",
   settings: "rm.settings.v1",
   jobDescription: "rm.jobdescription.v1",
+  coverLetter: "rm.coverletter.v1",
 } as const;
 
 const SECTION_IDS = DEFAULT_SECTION_ORDER_impl;

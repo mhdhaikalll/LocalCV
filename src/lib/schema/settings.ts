@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ResumeDocumentSchema, type ResumeDocument } from "./resume";
+import { CoverLetterSchema, type CoverLetter } from "./cover-letter";
 
 // ---- Template ----
 export const TemplateIdSchema = z.enum([
@@ -63,18 +64,27 @@ export const ExportEnvelopeSchema = z.object({
   version: z.literal(1),
   document: ResumeDocumentSchema,
   settings: ResumeSettingsSchema,
+  /**
+   * Optional, and the envelope version is deliberately not bumped. Zod strips
+   * unknown keys, so an older build opening a newer file ignores this field
+   * instead of rejecting the envelope, and this build accepts an older envelope
+   * that lacks it.
+   */
+  coverLetter: CoverLetterSchema.optional(),
   exportedAt: z.string(),
 });
 export type ExportEnvelope = z.infer<typeof ExportEnvelopeSchema>;
 export function buildExportEnvelope(
   document: ResumeDocument,
   settings: ResumeSettings,
+  coverLetter?: CoverLetter,
 ): ExportEnvelope {
   return {
     format: "resume-maker",
     version: 1,
     document,
     settings,
+    ...(coverLetter ? { coverLetter } : {}),
     exportedAt: new Date().toISOString(),
   };
 }

@@ -10,6 +10,7 @@ import {
 import { PAGE_SIZES } from "@/lib/templates/style-context";
 import type { ResumeDocument, ResumeSettings, SectionId } from "@/lib/schema";
 import { getSectionLabel } from "@/lib/schema";
+import { contactLine } from "@/lib/cover-letter/contact";
 
 interface TemplateRendererProps {
   document: ResumeDocument;
@@ -29,15 +30,16 @@ interface TemplateRendererProps {
   pageBreaks?: string[];
   /** Whitespace in px inserted before a section so it starts a new page. */
   pageSpacers?: Record<string, number>;
+  /**
+   * Marks this surface as the one being printed. Exactly one node in the
+   * document may carry `data-print-root`; the editor sets it on whichever
+   * surface the user asked to print, so the two never print on top of each
+   * other.
+   */
+  printable?: boolean;
   children?: ReactNode;
 }
 
-function contactLine(doc: ResumeDocument): string {
-  const c = doc.contact;
-  return [c.location, c.phone, c.email, c.website, c.linkedin, c.github]
-    .filter((v): v is string => typeof v === "string" && v.trim() !== "")
-    .join(" | ");
-}
 
 /**
  * Photo frame that honors the user's zoom/pan adjustments.
@@ -116,6 +118,7 @@ export function TemplateRenderer({
   decorative = false,
   pageBreaks,
   pageSpacers,
+  printable = true,
   children,
 }: TemplateRendererProps) {
   const s = buildStyleContext(settings, variant);
@@ -430,7 +433,7 @@ export function TemplateRenderer({
   );
 
   const page = PAGE_SIZES[settings.pageSize];
-  const contactInfo = contactLine(doc);
+  const contactInfo = contactLine(doc.contact);
   const photo = doc.contact.photo;
   const photoSidebar = variant === "photo-sidebar";
   const photoHeader = variant === "photo-header";
@@ -490,6 +493,7 @@ export function TemplateRenderer({
   return (
     <div
       id={decorative ? undefined : "resume-preview"}
+      data-print-root={printable ? "" : undefined}
       ref={innerRef}
       data-page-size={settings.pageSize}
       style={{

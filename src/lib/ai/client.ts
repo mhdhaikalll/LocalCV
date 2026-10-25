@@ -1,6 +1,6 @@
 "use client";
 
-export type AiAction = "rewrite" | "summarize" | "suggest";
+export type AiAction = "rewrite" | "summarize" | "suggest" | "polish-letter";
 
 export class AiError extends Error {
   status: number;
@@ -41,6 +41,25 @@ export async function requestAi(
 ): Promise<string> {
   const data = await post<{ result: string }>("/api/ai", { action, content, context });
   return data.result;
+}
+
+/**
+ * Polish an existing cover letter. Rewrite-only: the caller must diff and
+ * re-run the local checks before offering the result for acceptance.
+ */
+export async function requestLetterPolish(
+  letterText: string,
+  tone: string,
+  jobDescription: string,
+): Promise<{ result: string }> {
+  return post("/api/ai", {
+    action: "polish-letter",
+    content: letterText,
+    context: {
+      tone,
+      jobDescription: jobDescription.slice(0, 12000),
+    },
+  });
 }
 
 export interface AtsReviewFeedback {

@@ -3,10 +3,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
+  createEmptyCoverLetter,
   createEmptyDocument,
   createDefaultSettings,
+  sanitizeCoverLetter,
   sanitizeDocument,
   STORAGE_KEYS,
+  type CoverLetter,
   type ResumeDocument,
   type ResumeSettings,
   type SectionId,
@@ -18,6 +21,12 @@ interface ResumeState {
   document: ResumeDocument;
   settings: ResumeSettings;
   jobDescription: string;
+  /**
+   * Kept outside `document` and outside the undo/redo history: letters are
+   * regenerated rather than painstakingly hand-edited, and including them in
+   * history would double the size of every entry.
+   */
+  coverLetter: CoverLetter;
   past: ResumeDocument[];
   future: ResumeDocument[];
   importedAt: number | null;
@@ -32,6 +41,9 @@ interface ResumeState {
   replaceSettings: (settings: ResumeSettings) => void;
   // job description
   setJobDescription: (text: string) => void;
+  // cover letter
+  setCoverLetter: (letter: CoverLetter) => void;
+  updateCoverLetter: (patch: Partial<CoverLetter>) => void;
   // sections
   toggleSectionVisibility: (id: SectionId, visible: boolean) => void;
   reorderSections: (order: SectionId[]) => void;
@@ -49,6 +61,7 @@ export const useResumeStore = create<ResumeState>()(
       document: createEmptyDocument(),
       settings: createDefaultSettings(),
       jobDescription: "",
+      coverLetter: createEmptyCoverLetter(),
       past: [],
       future: [],
       importedAt: null,
@@ -103,6 +116,11 @@ export const useResumeStore = create<ResumeState>()(
 
       setJobDescription: (text) => set({ jobDescription: text }),
 
+      setCoverLetter: (letter) => set({ coverLetter: sanitizeCoverLetter(letter) }),
+
+      updateCoverLetter: (patch) =>
+        set((s) => ({ coverLetter: sanitizeCoverLetter({ ...s.coverLetter, ...patch }) })),
+
       toggleSectionVisibility: (id, visible) =>
         set((s) => ({
           document: {
@@ -128,6 +146,7 @@ export const useResumeStore = create<ResumeState>()(
         document: state.document,
         settings: state.settings,
         jobDescription: state.jobDescription,
+        coverLetter: state.coverLetter,
       }),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<ResumeState>;
@@ -137,6 +156,11 @@ export const useResumeStore = create<ResumeState>()(
           settings:
             p.settings && p.settings.templateId ? p.settings : current.settings,
           jobDescription: typeof p.jobDescription === "string" ? p.jobDescription : "",
+          // A payload saved before letters existed must hydrate to a usable
+          // empty letter, never `undefined`.
+          coverLetter: p.coverLetter
+            ? sanitizeCoverLetter(p.coverLetter)
+            : createEmptyCoverLetter(),
         };
       },
       onRehydrateStorage: () => (state) => {
