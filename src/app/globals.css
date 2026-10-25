@@ -3,21 +3,59 @@
 @import "tailwindcss/preflight.css" layer(base);
 @import "tailwindcss/utilities.css" layer(utilities);
 
-@theme {
+/*
+ * Colour tokens. Every surface/text/border literal in this file and in the
+ * editor's inline styles resolves through these, so a scheme switch needs no
+ * component changes. The `@theme` block is intentionally gone: nothing in the
+ * app used its Tailwind utilities (`bg-surface`, `text-primary`, ...), so
+ * keeping it would have meant maintaining a second, unused palette.
+ */
+:root,
+[data-mantine-color-scheme="light"] {
   --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
   --color-surface-muted: #f8fafb;
   --color-border: #e5eaec;
+  --color-border-subtle: #eef2f3;
   --color-text: #2c3a3e;
-  --color-text-muted: #6f7f87;
-  --color-primary: #478f94;
-  --color-accent: #478f94;
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-serif: "Georgia", serif;
+  /* 4.77:1 on white and 4.55:1 on the muted surface: body copy needs 4.5. */
+  --color-text-muted: #66757d;
+  --color-heading: #17292c;
+  --color-backdrop: #f1f4f5;
+  --color-stage: #f4f7f7;
+  --color-stage-line: #f2f6f6;
+  /* Accents are used as text, so this is 4.52:1 rather than brand-5's 3.73. */
+  --color-primary: #3f8086;
+  --color-accent: #3f8086;
+  --color-preview-edge: #c9d3d6;
+  --color-preview-label: #8b979c;
+  --color-on-emphasis: #ffffff;
+  color-scheme: light;
+}
+
+[data-mantine-color-scheme="dark"] {
+  --color-surface: #1a1f21;
+  --color-surface-raised: #202628;
+  --color-surface-muted: #141819;
+  --color-border: #2b3336;
+  --color-border-subtle: #242b2d;
+  --color-text: #e4e9ea;
+  --color-text-muted: #9aa8ad;
+  --color-heading: #eef2f3;
+  --color-backdrop: #101415;
+  --color-stage: #0e1213;
+  --color-stage-line: #1b2123;
+  --color-primary: #65a8ac;
+  --color-accent: #65a8ac;
+  --color-preview-edge: #2b3336;
+  --color-preview-label: #6f7f87;
+  --color-on-emphasis: #0b0e0f;
+  color-scheme: dark;
 }
 
 :root {
-  --background: #f1f4f5;
-  --foreground: #2c3a3e;
+  --background: var(--color-backdrop);
+  --foreground: var(--color-text);
 }
 
 body {
@@ -26,13 +64,27 @@ body {
 }
 
 /* ---- Resume preview page sizing ---- */
+/* The page is a document, not app chrome: it stays white and dark-ink in both
+   schemes, so a PDF exported at night matches one exported by day. */
 #resume-preview {
   --page-w: 8.5in;
   width: var(--page-w);
   min-height: 11in;
   background: #ffffff;
+  /* Literal ink, not `--color-text`: that token flips to near-white in dark
+     mode, which would render the resume pale-on-white. */
+  color: #2c3a3e;
+  color-scheme: light;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
 }
+
+[data-mantine-color-scheme="dark"] #resume-preview,
+[data-mantine-color-scheme="dark"] .resume-frame {
+  background: #ffffff;
+  color: #2c3a3e;
+  color-scheme: light;
+}
+
 
 /* Preview scale-down inside the pane is handled by transform on a wrapper */
 .preview-scaler {
@@ -67,7 +119,7 @@ body {
 /* ---- Landing page ---- */
 .landing-root {
   min-height: 100dvh;
-  background: #fbfcfc;
+  background: var(--color-surface-muted);
   color: var(--foreground);
 }
 
@@ -88,8 +140,8 @@ body {
   z-index: 200;
   padding: 8px 14px;
   border-radius: 6px;
-  background: #1d4043;
-  color: #fff;
+  background: var(--color-heading);
+  color: var(--color-on-emphasis);
   font-size: 0.875rem;
   transform: translateY(-160%);
   transition: transform 0.15s ease;
@@ -104,9 +156,9 @@ body {
   top: 0;
   z-index: 100;
   height: 64px;
-  background: rgba(251, 252, 252, 0.88);
+  background: color-mix(in srgb, var(--color-surface-muted) 88%, transparent);
   backdrop-filter: saturate(180%) blur(10px);
-  border-bottom: 1px solid #e6ebec;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .landing-mark {
@@ -131,12 +183,13 @@ body {
 
 .landing-wordmark {
   letter-spacing: -0.01em;
-  color: var(--mantine-color-brand-9);
+  /* brand-9 is near-black and would disappear on the dark header. */
+  color: var(--color-heading);
 }
 
 .landing-nav-link {
   font-size: 0.875rem;
-  color: #5a686f;
+  color: var(--color-text-muted);
   text-decoration: none;
   transition: color 0.15s ease;
 }
@@ -154,10 +207,10 @@ body {
 }
 
 .landing-hero {
-  border-bottom: 1px solid #edf1f2;
+  border-bottom: 1px solid var(--color-border-subtle);
   background:
-    radial-gradient(90rem 40rem at 78% -20%, #eef6f6 0%, rgba(238, 246, 246, 0) 60%),
-    #fbfcfc;
+    radial-gradient(90rem 40rem at 78% -20%, var(--color-surface-muted) 0%, transparent 60%),
+    var(--color-surface-muted);
 }
 
 .landing-eyebrow {
@@ -172,7 +225,7 @@ body {
   font-size: clamp(2rem, 4.4vw, 3.05rem);
   line-height: 1.08;
   letter-spacing: -0.03em;
-  color: #17292c;
+  color: var(--color-heading);
   max-width: 15ch;
 }
 
@@ -180,14 +233,14 @@ body {
   font-size: clamp(1.5rem, 2.6vw, 2.05rem);
   line-height: 1.15;
   letter-spacing: -0.02em;
-  color: #17292c;
+  color: var(--color-heading);
 }
 
 .landing-h3 {
   font-size: clamp(1.15rem, 1.8vw, 1.35rem);
   line-height: 1.25;
   letter-spacing: -0.015em;
-  color: #17292c;
+  color: var(--color-heading);
 }
 
 .landing-lede {
@@ -199,6 +252,30 @@ body {
   padding-top: 4px;
 }
 
+/* Mantine's brand ramp is tuned for light surfaces: brand-0 is almost white and
+   brand-9 almost black. These overrides keep selected/emphasis states readable
+   on the dark surface without touching the ramp itself, which the resume page
+   and the PDF still rely on. */
+[data-mantine-color-scheme="dark"] .template-option[data-active] {
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  border-color: var(--mantine-color-brand-4);
+}
+
+[data-mantine-color-scheme="dark"] .landing-mark {
+  border-color: var(--mantine-color-brand-4);
+}
+
+[data-mantine-color-scheme="dark"] .landing-eyebrow,
+[data-mantine-color-scheme="dark"] .step-number {
+  color: var(--mantine-color-brand-4);
+}
+
+[data-mantine-color-scheme="dark"] .landing-nav-link:hover,
+[data-mantine-color-scheme="dark"] .landing-nav-link:focus-visible,
+[data-mantine-color-scheme="dark"] .landing-footer-link:hover,
+[data-mantine-color-scheme="dark"] .landing-footer-link:focus-visible {
+  color: var(--mantine-color-brand-3);
+}
 .landing-check {
   color: var(--mantine-color-brand-6);
   flex-shrink: 0;
@@ -206,8 +283,8 @@ body {
 
 /* Preview card shared by hero and template sections */
 .preview-card {
-  background: #fff;
-  border: 1px solid #e3eaeb;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   overflow: hidden;
   min-width: 0;
@@ -218,12 +295,12 @@ body {
 
 .preview-toolbar {
   padding: 10px 14px;
-  border-bottom: 1px solid #eef2f3;
-  background: #fcfdfd;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-raised);
 }
 
 .preview-toolbar-label {
-  color: #48535a;
+  color: var(--color-text);
 }
 
 .preview-stage {
@@ -231,8 +308,8 @@ body {
   min-width: 0;
   overflow: hidden;
   background:
-    linear-gradient(#f2f6f6 1px, transparent 1px) 0 0 / 100% 28px,
-    #f4f7f7;
+    linear-gradient(var(--color-stage-line) 1px, transparent 1px) 0 0 / 100% 28px,
+    var(--color-stage);
 }
 
 .resume-frame {
@@ -240,7 +317,7 @@ body {
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
-  background: #fff;
+  background: var(--color-surface-raised);
   border-radius: 4px;
   box-shadow:
     0 0 0 1px rgba(23, 41, 44, 0.06),
@@ -253,9 +330,9 @@ body {
 }
 
 .preview-controls {
-  border-top: 1px solid #eef2f3;
+  border-top: 1px solid var(--color-border-subtle);
   padding: 12px 14px;
-  background: #fcfdfd;
+  background: var(--color-surface-raised);
 }
 
 .preview-segmented {
@@ -288,7 +365,7 @@ body {
 }
 
 .landing-section {
-  border-bottom: 1px solid #edf1f2;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .hero-caption {
@@ -297,11 +374,11 @@ body {
 }
 
 .landing-section-muted {
-  background: #f6f9f9;
+  background: var(--color-surface-muted);
 }
 
 .step {
-  border-top: 2px solid #dfe7e8;
+  border-top: 2px solid var(--color-border);
   padding-top: 14px;
 }
 
@@ -318,9 +395,9 @@ body {
   min-width: 0;
   text-align: left;
   padding: 10px 12px;
-  border: 1px solid #e3eaeb;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-surface-raised);
   transition:
     border-color 0.15s ease,
     background-color 0.15s ease;
@@ -352,8 +429,8 @@ body {
 
 .template-preview-caption {
   padding: 10px 14px;
-  border-top: 1px solid #eef2f3;
-  background: #fcfdfd;
+  border-top: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-raised);
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -367,15 +444,15 @@ body {
   gap: 12px;
   align-items: flex-start;
   padding: 14px 16px;
-  border: 1px solid #e3eaeb;
+  border: 1px solid var(--color-border);
   border-left: 3px solid var(--mantine-color-brand-5);
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-surface-raised);
 }
 
 .ats-card {
-  background: #fff;
-  border: 1px solid #e3eaeb;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 20px;
   box-shadow:
@@ -390,14 +467,14 @@ body {
 .ats-textarea {
   width: 100%;
   resize: vertical;
-  border: 1px solid #dbe3e4;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 10px 12px;
   font-family: inherit;
   font-size: 0.82rem;
   line-height: 1.5;
-  color: #2c3a3e;
-  background: #fcfdfd;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
 }
 
 .ats-textarea:focus-visible {
@@ -407,17 +484,17 @@ body {
 }
 
 .ats-keywords {
-  border-top: 1px solid #eef2f3;
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .privacy-point {
-  border-left: 1px solid #dfe7e8;
+  border-left: 1px solid var(--color-border);
   padding-left: 16px;
 }
 
 .landing-accordion :where(.mantine-Accordion-item) {
-  border-color: #e3eaeb;
-  background: #fff;
+  border-color: var(--color-border);
+  background: var(--color-surface-raised);
 }
 
 .landing-accordion :where(.mantine-Accordion-control) {
@@ -426,23 +503,23 @@ body {
 }
 
 .landing-cta {
-  background: #f2f7f7;
-  border-top: 1px solid #e3eaeb;
-  border-bottom: 1px solid #e3eaeb;
+  background: var(--color-surface-muted);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .landing-footer {
-  background: #fbfcfc;
+  background: var(--color-surface-muted);
 }
 
 .landing-footer-heading {
   letter-spacing: 0.12em;
-  color: #7c8b92;
+  color: var(--color-text-muted);
 }
 
 .landing-footer-link {
   font-size: 0.875rem;
-  color: #5a686f;
+  color: var(--color-text-muted);
   text-decoration: none;
   width: fit-content;
 }
@@ -468,7 +545,7 @@ body {
   }
   .privacy-point {
     border-left: none;
-    border-top: 1px solid #dfe7e8;
+    border-top: 1px solid var(--color-border);
     padding-left: 0;
     padding-top: 14px;
   }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { aiEnabled } from "@/lib/ai/server";
 
 /**
  * Reports whether the server AI routes are enabled so the client can disable
@@ -8,5 +9,5 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json({ enabled: process.env.AI_ENABLED === "true" });
+  return NextResponse.json({ enabled: aiEnabled() });
 }

@@ -205,7 +205,7 @@ export function TemplatePanel() {
                 style={{
                   position: "relative",
                   touchAction: "pan-y",
-                  background: "var(--mantine-color-white)",
+                  background: "var(--color-surface-raised)",
                   boxShadow: dragging ? "0 2px 8px rgba(0, 0, 0, 0.16)" : undefined,
                   zIndex: dragging ? 1 : undefined,
                 }}

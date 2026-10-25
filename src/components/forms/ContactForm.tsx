@@ -51,8 +51,8 @@ export function ContactForm() {
                 height: 64,
                 borderRadius: templateId === "photo-header" ? "50%" : 8,
                 overflow: "hidden",
-                border: "1px solid var(--mantine-color-gray-4)",
-                background: "var(--mantine-color-gray-1)",
+                border: "1px solid var(--color-border)",
+                background: "var(--color-surface-muted)",
                 flexShrink: 0,
               }}
             >

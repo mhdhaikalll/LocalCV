@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
-import { MantineProvider, createTheme, mantineHtmlProps } from "@mantine/core";
+import { MantineProvider, ColorSchemeScript, createTheme, mantineHtmlProps } from "@mantine/core";
 import { WebAnalytics } from "@/components/analytics/WebAnalytics";
 import { SITE } from "@/lib/seo/site";
 import { buildSiteSchema } from "@/lib/seo/schema";
@@ -116,10 +116,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`} {...mantineHtmlProps}>
       <head>
+        {/* Runs before first paint, so a reload in dark mode never flashes the
+            light palette. Defaults to light on purpose: for a document builder,
+            respecting an explicit choice beats following the OS. */}
+        <ColorSchemeScript defaultColorScheme="light" />
         <JsonLd data={buildSiteSchema()} />
       </head>
       <body className="min-h-full">
-        <MantineProvider theme={theme}>
+        <MantineProvider theme={theme} defaultColorScheme="light">
           <NextIntlClientProvider messages={messages}>
             {children}
           </NextIntlClientProvider>

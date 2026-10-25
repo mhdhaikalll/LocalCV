@@ -65,14 +65,51 @@ export function validateBaseUrl(raw: string): URL | null {
   return url;
 }
 
+/**
+ * Read an env var, treating blank/whitespace-only values (the common result of
+ * copying `.env.example` and filling only some keys) as unset. Using `??` alone
+ * would pass "" through and break URL parsing or send an empty model id.
+ */
+function envValue(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
+/** AI_ENABLED accepts "true" or "1", case- and whitespace-insensitive. */
+export function aiEnabled(): boolean {
+  const flag = envValue("AI_ENABLED")?.toLowerCase();
+  return flag === "true" || flag === "1";
+}
+
 export function getAiEnv(): AiEnv {
-  const rawBaseUrl = process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
   return {
-    enabled: process.env.AI_ENABLED === "true",
-    apiKey: process.env.OPENAI_API_KEY,
-    baseUrl: rawBaseUrl,
-    model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+    enabled: aiEnabled(),
+    apiKey: envValue("OPENAI_API_KEY"),
+    baseUrl: envValue("OPENAI_BASE_URL") ?? "https://api.openai.com/v1",
+    model: envValue("OPENAI_MODEL") ?? "gpt-4o-mini",
   };
+}
+
+/**
+ * Build the chat-completions URL from the configured base URL.
+ *
+ * `new URL("chat/completions", base)` replaces the last path segment, so a base
+ * of `https://api.openai.com/v1` would resolve to
+ * `https://api.openai.com/chat/completions` (404). Append to the path instead so
+ * prefixes like `/v1` or `/openai/v1` survive. A base that already ends in the
+ * completions path is used as-is.
+ */
+export function completionsUrl(baseUrl: string): URL | null {
+  const base = validateBaseUrl(baseUrl);
+  if (!base) return null;
+  const path = base.pathname.replace(/\/+$/, "");
+  const target = new URL(base.href);
+  target.pathname = /\/chat\/completions$/.test(path)
+    ? path
+    : `${path}/chat/completions`;
+  target.search = "";
+  target.hash = "";
+  return target;
 }
 
 export const errorResponse = (
@@ -195,11 +232,11 @@ export async function chatCompletion(
   messages: { role: "system" | "user"; content: string }[],
   jsonMode: boolean,
 ): Promise<string> {
-  const url = validateBaseUrl(env.baseUrl);
+  const url = completionsUrl(env.baseUrl);
   if (!url) {
     throw new Error("provider_error:invalid_base_url");
   }
-  const res = await fetch(new URL("chat/completions", url), {
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

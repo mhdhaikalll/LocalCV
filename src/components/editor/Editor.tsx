@@ -5,6 +5,7 @@ import { useReactToPrint } from "react-to-print";
 import {
   Accordion,
   ActionIcon,
+  Alert,
   AppShell,
   Badge,
   Box,
@@ -12,8 +13,10 @@ import {
   Drawer,
   Group,
   Menu,
+  Modal,
   ScrollArea,
   SegmentedControl,
+  Stack,
   Text,
   Title,
   Tooltip,
@@ -26,6 +29,7 @@ import {
   IconDownload,
   IconFileTypePdf,
   IconFileUpload,
+  IconInfoCircle,
   IconLayoutGrid,
   IconRobot,
 } from "@tabler/icons-react";
@@ -39,6 +43,7 @@ import { computeAtsScore } from "@/lib/ats/scoring";
 import { measurePageUnits, measureResumeContentHeight } from "@/lib/layout/measure";
 import { PAGE_HEIGHT_PX } from "@/lib/layout/page-fit";
 import { usePrintPageStyle } from "@/lib/export/print-page-style";
+import { ColorSchemeToggle } from "./ColorSchemeToggle";
 import { exportJson } from "@/lib/export/json";
 import { ResumePreview } from "@/components/templates";
 import { TemplatePanel } from "@/components/templates/TemplatePanel";
@@ -192,7 +197,7 @@ function PreviewScaler({ children }: { children: React.ReactNode }) {
       w="100%"
       style={{
         overflow: "auto",
-        background: "var(--mantine-color-gray-3)",
+        background: "var(--color-backdrop)",
         padding: 8,
       }}
     >
@@ -232,9 +237,9 @@ function PreviewScaler({ children }: { children: React.ReactNode }) {
                   right: 0,
                   top,
                   height: 8,
-                  background: "var(--mantine-color-gray-2)",
-                  borderTop: "1px solid #c9d3d6",
-                  borderBottom: "1px solid #c9d3d6",
+                  background: "var(--color-backdrop)",
+                  borderTop: "1px solid var(--color-preview-edge)",
+                  borderBottom: "1px solid var(--color-preview-edge)",
                 }}
               >
                 <span
@@ -244,7 +249,7 @@ function PreviewScaler({ children }: { children: React.ReactNode }) {
                     top: -14,
                     fontSize: 9,
                     lineHeight: "12px",
-                    color: "#8b979c",
+                    color: "var(--color-preview-label)",
                     letterSpacing: "0.04em",
                   }}
                 >
@@ -273,6 +278,7 @@ export function Editor() {
   const [panel, setPanel] = useState<Panel>("none");
   const [mobileTab, setMobileTab] = useState<MobileTab>("form");
   const [openSection, setOpenSection] = useState<string | null>("contact");
+  const [printHintOpen, setPrintHintOpen] = useState(false);
   const hydrated = useResumeStore((s) => s.hydrated);
   const isMobile = useMediaQuery("(max-width: 48em)");
 
@@ -374,6 +380,7 @@ export function Editor() {
           {isMobile ? (
             <Group gap={4} wrap="nowrap">
               <ScoreBadge onClick={() => openPanel("ats")} />
+              <ColorSchemeToggle />
               <Menu position="bottom-end" withinPortal>
                 <Menu.Target>
                   <ActionIcon
@@ -391,6 +398,12 @@ export function Editor() {
                     onClick={triggerPrint}
                   >
                     Export PDF
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<IconInfoCircle size={16} />}
+                    onClick={() => setPrintHintOpen(true)}
+                  >
+                    PDF export tips
                   </Menu.Item>
                   <Menu.Item
                     leftSection={<IconDownload size={16} />}
@@ -431,6 +444,7 @@ export function Editor() {
           ) : (
             <Group gap="xs" wrap="nowrap">
               <ScoreBadge onClick={() => openPanel("ats")} />
+              <ColorSchemeToggle />
               <Box visibleFrom="lg">
                 <PageFitBadge />
               </Box>
@@ -495,12 +509,14 @@ export function Editor() {
         {importedAt && (
           <Group
             justify="space-between"
-            bg="brand.0"
+            style={{
+              background: "var(--color-surface-muted)",
+              borderBottom: "1px solid var(--color-border)",
+            }}
             px="md"
             py={6}
-            style={{ borderBottom: "1px solid var(--mantine-color-brand-2)" }}
           >
-            <Text size="xs" c="brand.8">
+            <Text size="xs" c="var(--color-text)">
               Import detected content — review each section before saving.
             </Text>
             <Button
@@ -538,7 +554,7 @@ export function Editor() {
             style={{
               flexDirection: "column",
               overflow: "hidden",
-              borderRight: "1px solid var(--mantine-color-gray-3)",
+              borderRight: "1px solid var(--color-border)",
             }}
             data-show-desktop
           >
@@ -549,7 +565,7 @@ export function Editor() {
                 variant="separated"
                 radius="md"
                 styles={{
-                  item: { background: "var(--mantine-color-white)" },
+                  item: { background: "var(--color-surface-raised)" },
                   content: { paddingTop: "var(--mantine-spacing-sm)" },
                 }}
               >
@@ -642,6 +658,31 @@ export function Editor() {
         >
           <ImportPanel />
         </Drawer>
+        <Modal
+          opened={printHintOpen}
+          onClose={() => setPrintHintOpen(false)}
+          title="Getting a clean PDF"
+          centered
+        >
+          <Stack gap="sm">
+            <Text size="sm">
+              The browser adds its own header and footer when printing: the date,
+              the page title, the site URL and the page number. Those lines are
+              drawn outside the page, in the margin area, so a stylesheet cannot
+              remove them.
+            </Text>
+            <Text size="sm">
+              In the print dialog, open <strong>More settings</strong> and clear{" "}
+              <strong>Headers and footers</strong>. Choose <strong>Save as PDF</strong> as
+              the destination, and set margins to <strong>None</strong> or{" "}
+              <strong>Default</strong>, because the resume supplies its own margins.
+            </Text>
+            <Alert color="blue" variant="light" icon={<IconInfoCircle size={16} />}>
+              Your page breaks, margins and page count are already correct. This
+              setting only affects the browser&apos;s extra text around the page.
+            </Alert>
+          </Stack>
+        </Modal>
         <EditorTour
           enabled={tourEnabled}
           isEmpty={isEmpty}

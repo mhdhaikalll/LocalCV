@@ -80,7 +80,7 @@ export function ImportPanel() {
             borderWidth: 2,
             borderColor: dragOver
               ? "var(--mantine-color-brand-6)"
-              : "var(--mantine-color-gray-4)",
+              : "var(--color-border)",
             background: dragOver ? "var(--mantine-color-brand-0)" : undefined,
           }}
         >
