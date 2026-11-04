@@ -48,4 +48,6 @@ vuln.md
 
 validate-ssrf.mjs.tmp
 
-/skill
+/.agents
+skills-lock.json
+/docs
