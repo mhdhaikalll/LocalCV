@@ -100,6 +100,7 @@ export function buildStyleContext(
       margin: `2pt 0 0`,
       paddingLeft: "16pt",
       listStyleType: "disc",
+      textAlign: "justify",
     },
     headerStyle: {
       marginBottom: `calc(${(baseGap * spacer).toFixed(2)}em * 0.5)`,

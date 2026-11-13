@@ -182,7 +182,9 @@ export function TemplateRenderer({
                 </span>
               )}
             </div>
-            {e.company && e.role ? <p style={{ margin: 0 }}>{e.role}</p> : null}
+            {e.company && e.role ? (
+              <p style={{ margin: 0, textAlign: "justify" }}>{e.role}</p>
+            ) : null}
             {e.location ? <p style={s.entryMetaStyle}>{e.location}</p> : null}
             {bullets(e.bullets, s.listStyle)}
           </div>
@@ -214,7 +216,9 @@ export function TemplateRenderer({
                 </span>
               )}
             </div>
-            {e.degree ? <p style={{ margin: 0 }}>{e.degree}</p> : null}
+            {e.degree ? (
+              <p style={{ margin: 0, textAlign: "justify" }}>{e.degree}</p>
+            ) : null}
             {e.cgpa ? <p style={s.entryMetaStyle}>CGPA: {e.cgpa}</p> : null}
             {bullets(e.bullets, s.listStyle)}
           </div>
@@ -228,7 +232,9 @@ export function TemplateRenderer({
         {doc.projects.map((p) => (
           <div key={p.id} className="resume-entry" data-page-block="entry">
             <EntryTag style={s.entryTitleStyle}>{p.name}</EntryTag>
-            {p.description ? <p style={{ margin: 0 }}>{p.description}</p> : null}
+            {p.description ? (
+              <p style={{ margin: 0, textAlign: "justify" }}>{p.description}</p>
+            ) : null}
             {p.link ? (
               <p style={{ margin: 0 }}>
                 <a
@@ -363,7 +369,9 @@ export function TemplateRenderer({
             >
               <div>
                 <EntryTag style={s.entryTitleStyle}>{e.title}</EntryTag>
-                {e.subtitle ? <p style={{ margin: 0 }}>{e.subtitle}</p> : null}
+                {e.subtitle ? (
+                  <p style={{ margin: 0, textAlign: "justify" }}>{e.subtitle}</p>
+                ) : null}
               </div>
               {e.date ? (
                 <span style={{ ...s.entryMetaStyle, fontWeight: 600, whiteSpace: "nowrap" }}>
