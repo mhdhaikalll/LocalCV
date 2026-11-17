@@ -92,10 +92,10 @@ function PhotoFrame({
   );
 }
 
-function bullets(items: string[], listStyle: CSSProperties) {
+function bullets(items: string[], listStyle: CSSProperties, textAlign: CSSProperties["textAlign"]) {
   if (!items.filter((b) => b.trim()).length) return null;
   return (
-    <ul style={listStyle}>
+    <ul style={{ ...listStyle, textAlign }}>
       {items
         .filter((b) => b.trim())
         .map((b, i) => (
@@ -122,6 +122,11 @@ export function TemplateRenderer({
   children,
 }: TemplateRendererProps) {
   const s = buildStyleContext(settings, variant);
+  // Two-column layouts align prose per column: the side rail inherits the
+  // column's ragged-right text (it is too narrow to justify without rivers),
+  // while the main column justifies. Every other template justifies outright.
+  const inColumns = layout === "two-column" || variant === "photo-sidebar";
+  const proseAlign: CSSProperties["textAlign"] = inColumns ? "inherit" : "justify";
   const sections = visibleSections(doc) as SectionId[];
   const order = doc.sectionOrder;
   const NameTag = decorative ? "div" : "h1";
@@ -130,7 +135,7 @@ export function TemplateRenderer({
 
   const renderSummary = () =>
     isSectionVisible(doc, "summary") ? (
-      <p data-page-block="text" style={{ margin: 0, textAlign: "justify" }}>{doc.summary}</p>
+      <p data-page-block="text" style={{ margin: 0, textAlign: proseAlign }}>{doc.summary}</p>
     ) : null;
 
   const renderExperience = () =>
@@ -183,10 +188,10 @@ export function TemplateRenderer({
               )}
             </div>
             {e.company && e.role ? (
-              <p style={{ margin: 0, textAlign: "justify" }}>{e.role}</p>
+              <p style={{ margin: 0, textAlign: proseAlign }}>{e.role}</p>
             ) : null}
             {e.location ? <p style={s.entryMetaStyle}>{e.location}</p> : null}
-            {bullets(e.bullets, s.listStyle)}
+            {bullets(e.bullets, s.listStyle, proseAlign)}
           </div>
         ))}
       </div>
@@ -217,10 +222,10 @@ export function TemplateRenderer({
               )}
             </div>
             {e.degree ? (
-              <p style={{ margin: 0, textAlign: "justify" }}>{e.degree}</p>
+              <p style={{ margin: 0, textAlign: proseAlign }}>{e.degree}</p>
             ) : null}
             {e.cgpa ? <p style={s.entryMetaStyle}>CGPA: {e.cgpa}</p> : null}
-            {bullets(e.bullets, s.listStyle)}
+            {bullets(e.bullets, s.listStyle, proseAlign)}
           </div>
         ))}
       </div>
@@ -233,7 +238,7 @@ export function TemplateRenderer({
           <div key={p.id} className="resume-entry" data-page-block="entry">
             <EntryTag style={s.entryTitleStyle}>{p.name}</EntryTag>
             {p.description ? (
-              <p style={{ margin: 0, textAlign: "justify" }}>{p.description}</p>
+              <p style={{ margin: 0, textAlign: proseAlign }}>{p.description}</p>
             ) : null}
             {p.link ? (
               <p style={{ margin: 0 }}>
@@ -245,7 +250,7 @@ export function TemplateRenderer({
                 </a>
               </p>
             ) : null}
-            {bullets(p.bullets, s.listStyle)}
+            {bullets(p.bullets, s.listStyle, proseAlign)}
           </div>
         ))}
       </div>
@@ -318,7 +323,7 @@ export function TemplateRenderer({
                 </span>
               ) : null}
             </div>
-            {bullets(e.bullets, s.listStyle)}
+            {bullets(e.bullets, s.listStyle, proseAlign)}
           </div>
         ))}
       </div>
@@ -370,7 +375,7 @@ export function TemplateRenderer({
               <div>
                 <EntryTag style={s.entryTitleStyle}>{e.title}</EntryTag>
                 {e.subtitle ? (
-                  <p style={{ margin: 0, textAlign: "justify" }}>{e.subtitle}</p>
+                  <p style={{ margin: 0, textAlign: proseAlign }}>{e.subtitle}</p>
                 ) : null}
               </div>
               {e.date ? (
@@ -379,7 +384,7 @@ export function TemplateRenderer({
                 </span>
               ) : null}
             </div>
-            {bullets(e.bullets, s.listStyle)}
+            {bullets(e.bullets, s.listStyle, proseAlign)}
           </div>
         ))}
       </div>
@@ -496,7 +501,7 @@ export function TemplateRenderer({
     </header>
   );
 
-  const useTwoColumn = layout === "two-column" || photoSidebar;
+  const useTwoColumn = inColumns;
 
   return (
     <div
@@ -518,7 +523,7 @@ export function TemplateRenderer({
             gridTemplateColumns: "30% 1fr",
           }}
         >
-          <div style={{ paddingRight: "18pt" }}>
+          <div style={{ paddingRight: "18pt", textAlign: "left" }}>
             {(["skills", "certifications", "languages", "interests", "education"] as SectionId[]).map((section) => {
               const render = sectionRenderers[section];
               if (!render || !order.includes(section) || !isSectionVisible(doc, section)) {
@@ -536,6 +541,7 @@ export function TemplateRenderer({
             style={{
               borderLeft: `1pt solid ${settings.accentColor}`,
               paddingLeft: "18pt",
+              textAlign: "justify",
             }}
           >
             {(["summary", "experience", "projects", "extracurriculars", "additional", "references"] as SectionId[]).map((section) => {
